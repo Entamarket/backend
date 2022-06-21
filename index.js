@@ -14,14 +14,29 @@ app.use((req, res, next)=>{
 
 app.use((req, res, next)=>{
     let buffer = ''
+    let exceededDataLimit = false
     req.on('data', (dataStream)=>{
+
+        if(Buffer.byteLength(dataStream, 'utf8') > Math.pow(2, 24)){
+            exceededDataLimit = true
+        }
         buffer += dataStream
     })
 
     req.on('end', ()=>{
-        req.body = buffer
-
-        next()
+        console.log(exceededDataLimit)
+        if(!exceededDataLimit){
+            req.body = buffer
+            next()  
+        }
+        else{
+            res.status(400)
+            res.set('content-type', 'text/plain')
+            res.send('Data sent is too large')
+            res.end()
+            
+        }
+        
     })
 })
 
@@ -30,3 +45,5 @@ app.use(router)
 
 
 app.listen(3000)
+
+

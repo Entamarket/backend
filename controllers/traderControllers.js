@@ -7,6 +7,7 @@ traderControllers.post = ('/signup', (req, res, next)=>{
    // check if incoming data is in JSON format
    if(utilities.isJSON(req.body)){
     //parse incoming data
+    
 
    }
    else{
