@@ -2,6 +2,8 @@ const express = require('express')
 
 const router = require('./routes/router')
 
+const utilities = require('./lib/utilities')
+
 const app = express()
 
 
@@ -24,16 +26,12 @@ app.use((req, res, next)=>{
     })
 
     req.on('end', ()=>{
-        console.log(exceededDataLimit)
         if(!exceededDataLimit){
             req.body = buffer
             next()  
         }
         else{
-            res.status(400)
-            res.set('content-type', 'text/plain')
-            res.send('Data sent is too large')
-            res.end()
+            utilities.setResponseData(res, 400, {'content-type': 'text/plain'}, 'Data sent is too large', false )
             
         }
         
@@ -42,8 +40,4 @@ app.use((req, res, next)=>{
 
 app.use(router)
 
-
-
 app.listen(3000)
-
-
