@@ -1,4 +1,5 @@
 const utilities = require('../lib/utilities')
+const Trader = require('../models/trader')
 
 const traderControllers = {}
 
@@ -13,14 +14,23 @@ traderControllers.post = ('/signup', (req, res, next)=>{
     if(utilities.validator(parsedData, ['firstName', 'lastName', 'email', 'userName', 'password', 'bankName', 'accountName', 'accountName'])){
       //remove all white spaces from user data if any
       const trimmedData = utilities.trimmer(parsedData)
-      console.log(trimmedData)
 
       //store trimmedData in pending trader collection
+      const trader = new Trader(trimmedData, true)
+      trader.save()
+      .then(msg=>{
+        utilities.setResponseData(res, 201, {'content-type': 'text/plain'}, msg, false)
+
+        // send an email to the trader for verification
+      })
+      .catch(err=>{
+        console.log('err')
+        utilities.setResponseData(res, 500, {'content-type': 'text/plain'}, err, false)
+      })
       
       
     }
     else{
-      console.log('fail')
       utilities.setResponseData(res, 400, {'content-type': 'text/plain'}, 'Invalid data', false)
     }
     
