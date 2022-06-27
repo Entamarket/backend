@@ -11,7 +11,7 @@ traderControllers.post = ('/signup', (req, res, next)=>{
     const parsedData = JSON.parse(req.body)
     
     //check if parsed data is Valid
-    if(utilities.validator(parsedData, ['firstName', 'lastName', 'email', 'userName', 'password', 'bankName', 'accountName', 'accountName'])){
+    if(utilities.validator(parsedData, ['firstName', 'lastName', 'email', 'userName', 'phoneNumber', 'password'])){
       //remove all white spaces from user data if any
       const trimmedData = utilities.trimmer(parsedData)
 
@@ -22,6 +22,8 @@ traderControllers.post = ('/signup', (req, res, next)=>{
         utilities.setResponseData(res, 201, {'content-type': 'text/plain'}, msg, false)
 
         // send an email to the trader for verification
+
+
       })
       .catch(err=>{
         console.log('err')
