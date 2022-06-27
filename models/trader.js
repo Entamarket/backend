@@ -1,4 +1,4 @@
-const mongo = require('../lib/database')
+const mongo = require('../lib/database').mongo
 
 class Trader{
     constructor(props, isPending){

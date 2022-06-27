@@ -3,8 +3,8 @@ const Trader = require('../models/trader')
 
 const traderControllers = {}
 
-
 traderControllers.post = ('/signup', (req, res, next)=>{
+
    // check if incoming data is in JSON format
    if(utilities.isJSON(req.body)){
     //parse incoming data
@@ -20,7 +20,7 @@ traderControllers.post = ('/signup', (req, res, next)=>{
       trader.save()
       .then(msg=>{
         utilities.setResponseData(res, 201, {'content-type': 'text/plain'}, msg, false)
-
+        
         // send an email to the trader for verification
 
 
@@ -29,8 +29,7 @@ traderControllers.post = ('/signup', (req, res, next)=>{
         console.log('err')
         utilities.setResponseData(res, 500, {'content-type': 'text/plain'}, err, false)
       })
-      
-      
+       
     }
     else{
       utilities.setResponseData(res, 400, {'content-type': 'text/plain'}, 'Invalid data', false)
