@@ -17,7 +17,7 @@ class Trader{
             this.props.createdAt = new Date()
             //Add OTP
             this.props.otp = utilities.otpMaker()
-                   
+
             const collection = db.collection(database.collection.pendingTraders)
             return collection.insertOne(this.props)  
         }

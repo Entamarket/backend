@@ -4,10 +4,10 @@ const email = require('../lib/email')
 
 const traderControllers = {}
 
-traderControllers.post = ('/signup', (req, res, next)=>{
+traderControllers.post = ('/signup', async (req, res, next)=>{
 
-   // check if incoming data is in JSON format
-   if(utilities.isJSON(req.body)){
+  // check if incoming data is in JSON format
+  if(utilities.isJSON(req.body)){
     //parse incoming data
     const parsedData = JSON.parse(req.body)
     
@@ -20,9 +20,44 @@ traderControllers.post = ('/signup', (req, res, next)=>{
       trimmedData.password = utilities.dataHasher(trimmedData.password)
 
       //store trimmedData in pending trader collection
-      const trader = new Trader(trimmedData, true)
-      trader.save()
-      .then(msg=>{
+
+      const trimmedDataa = {
+        firstName: 'Chinomso',
+        lastName: 'Amadi',
+        userName: 'noni2',
+        email: 'chinomsoamadi77@gmail.com',
+        password: 'ec78b1f8459ce9a31a30b91520cbb4aeda9e82017cd7834bf2dee7f09debc0dd',
+        phoneNumber: '0803398499',
+        isEmailVerified: false,
+        createdAt: new Date(),
+        otp: '7363'
+      }
+
+      const trader = new Trader(trimmedDataa, true)
+
+      let saveTraderValue;
+
+      //const checkSaveTraderValueError =  await trader.save()
+
+      try{
+        const checkSaveTraderValueError =  await trader.save()
+        console.log(saveTraderValue)
+        saveTraderValue = checkSaveTraderValueError
+      }
+      catch(err){
+        console.log(err)
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, err, true)
+        return
+      }
+      console.log('cont')
+
+      console.log(saveTraderValue)
+
+    
+       
+      
+
+     /* .then(msg=>{
         console.log(msg)
         
         //send an email to the trader for verification
@@ -57,7 +92,7 @@ traderControllers.post = ('/signup', (req, res, next)=>{
 
         }
         
-      })
+      })*/
        
     }
     else{

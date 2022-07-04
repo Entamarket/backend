@@ -41,11 +41,6 @@ app.use((req, res, next)=>{
     })
 })
 
-app.use((req, res, next)=>{
-    databaseRoute(req, res, next)
-    next()
-})
-
 app.use(router)
 
 
