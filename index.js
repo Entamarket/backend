@@ -3,8 +3,8 @@ const express = require('express')
 const router = require('./routes/router')
 
 const utilities = require('./lib/utilities')
-const mongo = require('./lib/database').mongo
-const mongoRoute = require('./lib/database').router
+const database = require('./lib/database').database
+const databaseRoute = require('./lib/database').router
 
 const app = express()
 
@@ -42,14 +42,14 @@ app.use((req, res, next)=>{
 })
 
 app.use((req, res, next)=>{
-    mongoRoute(req, res, next)
+    databaseRoute(req, res, next)
     next()
 })
 
 app.use(router)
 
 
-mongo.connect(()=>{
+database.connect(()=>{
     app.listen(3000)
     console.log('connected to server')
 })
