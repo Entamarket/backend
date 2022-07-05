@@ -1,4 +1,5 @@
 const utilities = require('../lib/utilities')
+const database = require('../lib/database')
 const Trader = require('../models/trader')
 const email = require('../lib/email')
 
@@ -19,80 +20,36 @@ traderControllers.post = ('/signup', async (req, res, next)=>{
       //hash the password
       trimmedData.password = utilities.dataHasher(trimmedData.password)
 
-      //store trimmedData in pending trader collection
-
-      const trimmedDataa = {
-        firstName: 'Chinomso',
-        lastName: 'Amadi',
-        userName: 'noni2',
-        email: 'chinomsoamadi77@gmail.com',
-        password: 'ec78b1f8459ce9a31a30b91520cbb4aeda9e82017cd7834bf2dee7f09debc0dd',
-        phoneNumber: '0803398499',
-        isEmailVerified: false,
-        createdAt: new Date(),
-        otp: '7363'
-      }
-
-      const trader = new Trader(trimmedDataa, true)
-
-      let saveTraderValue;
-
-      //const checkSaveTraderValueError =  await trader.save()
-
+      //check if userName, email or phone number exists in database
       try{
-        const checkSaveTraderValueError =  await trader.save()
-        console.log(saveTraderValue)
-        saveTraderValue = checkSaveTraderValueError
+      
+        const existingUser = await database.checkForExistingUser(trimmedData)
+
+        if(existingUser.constructor.name == 'Object' && !existingUser.doesUserDetailExist){
+
+          //store trimmed data in database(pendingTraders collection)
+          const trader = new Trader(trimmedData, true)
+
+          await trader.save()
+
+          //send an email to the trader for verification
+          await email.send("tradespace19@gmail.com", trimmedData.email, `hello ${trimmedData.firstName} ${trimmedData.lastName}, please verify your address by copying this OTP: ${trimmedData.otp}`, trimmedData.firstName)
+
+          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: `verification email sent`}, true)
+
+        }
+        else{
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: `this ${existingUser.userDetail} already exists`}, true)
+          return
+        }
+
       }
       catch(err){
         console.log(err)
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, err, true)
+        
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "something went wrong with the server"}, true)
         return
       }
-      console.log('cont')
-
-      console.log(saveTraderValue)
-
-    
-       
-      
-
-     /* .then(msg=>{
-        console.log(msg)
-        
-        //send an email to the trader for verification
-        email.send("tradespace19@gmail.com", trimmedData.email, `hello ${trimmedData.firstName} ${trimmedData.lastName}, please verify your address by copying this OTP: 3324`, trimmedData.firstName)
-        .then(value=>{
-
-          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: 'success'}, true)
-
-        })
-        .catch(err=>{
-
-          try{
-            throw 'unable to send email, try again with a verified email'
-          }
-          catch(err){
-            console.log(err)
-
-            utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: err}, true)
-          }
-          
-        })
-        
-      })
-      .catch(err=>{
-        console.log(err)
-        try{
-          throw 'unable to save data'
-        }
-        catch(err){
-          console.log(err)
-          utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: err}, true)
-
-        }
-        
-      })*/
        
     }
     else{

@@ -1,6 +1,6 @@
 const utilities = require('../lib/utilities');
 
-const database = require('../lib/database').database
+const database = require('../lib/database')
 
 class Trader{
     constructor(props, isPending){

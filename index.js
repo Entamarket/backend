@@ -3,8 +3,7 @@ const express = require('express')
 const router = require('./routes/router')
 
 const utilities = require('./lib/utilities')
-const database = require('./lib/database').database
-const databaseRoute = require('./lib/database').router
+const database = require('./lib/database')
 
 const app = express()
 
