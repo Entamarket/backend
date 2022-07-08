@@ -28,14 +28,20 @@ traderControllers.post = ('/signup', async (req, res, next)=>{
         if(existingUser.constructor.name == 'Object' && !existingUser.doesUserDetailExist){
 
           //store trimmed data in database(pendingTraders collection)
-          const trader = new Trader(trimmedData, true)
+          const pendingTrader = new Trader(trimmedData, true)
 
-          await trader.save()
+          await pendingTrader.save()
 
-          //send an email to the trader for verification
-          await email.send("tradespace19@gmail.com", trimmedData.email, `hello ${trimmedData.firstName} ${trimmedData.lastName}, please verify your address by copying this OTP: ${trimmedData.otp}`, trimmedData.firstName)
+          //send an sms to the trader for verification of phone number
+          await email.send('tradespace19@gmail.com', trimmedData.email, `hello ${trimmedData.firstName} ${trimmedData.lastName}, please verify your phone number with this OTP: ${trimmedData.otp}`, trimmedData.firstName)
+      
+          //Send JWT
+          //fetch the user ID from the database
+          const user = await pendingTrader.getTrader('userName', trimmedData.userName)
+          const token = utilities.jwt('sign', {id: user._id.toString()})
 
-          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: `verification email sent`}, true)
+          //send token to client
+          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {tradeSpaceToken: token}, true)
 
         }
         else{

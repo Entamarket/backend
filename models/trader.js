@@ -31,6 +31,15 @@ class Trader{
         
         
     }
+    getTrader = (key, value)=>{
+        const db = database.getDatabase()
+
+        if(this.isPending){
+            return db.collection('pendingTraders').findOne({[key]: value})
+        }
+        
+        return db.collection('traders').findOne({[key]: value})
+    }
 }
 
 module.exports = Trader
