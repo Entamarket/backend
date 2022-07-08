@@ -7,6 +7,8 @@ const database = require('./lib/database')
 
 const app = express()
 
+const port = process.env.PORT || 3000
+
 
 app.use((req, res, next)=>{
     res.setHeader('Access-Control-Allow-Origin', '*')
@@ -44,6 +46,6 @@ app.use(router)
 
 
 database.connect(()=>{
-    app.listen(3000)
+    app.listen(port)
     console.log('connected to server')
 })
