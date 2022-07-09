@@ -35,7 +35,7 @@ app.use((req, res, next)=>{
             next()  
         }
         else{
-            utilities.setResponseData(res, 400, {'content-type': 'text/plain'}, 'Data sent is too large', false )
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, 'Data sent is too large', true )
             
         }
         
