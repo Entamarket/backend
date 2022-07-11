@@ -107,9 +107,8 @@ traderControllers.verifyOtp = ('/signup/account-verification', async (req, res)=
             traderObj._id = traderObj._id.toString()
             traderObj.accountBalance = traderObj.accountBalance.toString()
             const newToken = utilities.jwt('sign', {id: traderObj._id})
-            traderObj.entaMarketToken = newToken
             
-            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, traderData: traderObj}, true )
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, traderData: traderObj, entaMarketToken: newToken}, true )
   
           }
           else{
