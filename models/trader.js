@@ -1,5 +1,5 @@
+const {Decimal128} = require('mongodb')
 const utilities = require('../lib/utilities');
-
 const database = require('../lib/database')
 
 class Trader{
@@ -23,7 +23,8 @@ class Trader{
         }
         else{
             this.props.shops = []
-            this.props.tokens = []
+            this.props.accountBalance = Decimal128("0.00")
+            this.props.joinedAt = new Date().toLocaleString()
             const collection = db.collection(database.collection.traders)
             return collection.insertOne(this.props)
     
@@ -31,15 +32,7 @@ class Trader{
         
         
     }
-    getTrader = (key, value)=>{
-        const db = database.getDatabase()
-
-        if(this.isPending){
-            return db.collection('pendingTraders').findOne({[key]: value})
-        }
-        
-        return db.collection('traders').findOne({[key]: value})
-    }
+    
 }
 
 module.exports = Trader

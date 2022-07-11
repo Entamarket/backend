@@ -6,7 +6,8 @@ const traderControllers = require('../controllers/traderControllers')
 
 
 
-router.post('/trader/signup', traderControllers.post)
+router.post('/trader/signup', traderControllers.signup)
+router.put('/trader/signup/account-verification', traderControllers.verifyOtp)
 
 
 module.exports = router
