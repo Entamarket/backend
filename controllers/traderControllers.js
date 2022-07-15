@@ -34,7 +34,7 @@ traderControllers.signup = ('/signup', async (req, res)=>{
           await pendingTrader.save()
 
           //send an sms to the trader for verification of phone number
-          await email.send('tradespace19@gmail.com', trimmedData.email, `hello ${trimmedData.firstName} ${trimmedData.lastName}, please verify your phone number with this OTP: ${trimmedData.otp}`, trimmedData.firstName)
+          await email.send('entamarketltd@gmail.com', trimmedData.email, `hello ${trimmedData.firstName} ${trimmedData.lastName}, please verify your phone number with this OTP: ${trimmedData.otp}`, trimmedData.firstName)
       
           //Send JWT
           //fetch the user ID from the database
