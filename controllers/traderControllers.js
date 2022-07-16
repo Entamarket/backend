@@ -38,9 +38,9 @@ traderControllers.signup = ('/signup', async (req, res)=>{
       
           //Send JWT
           //fetch the user ID from the database
-          const pendingTraderObj = await database.getDatabase().collection(database.collection.pendingTraders).findOne({userName: trimmedData.userName}, {projection: {_id: 1}})
-          
-          const token = utilities.jwt('sign', {id: pendingTraderObj._id.toString()})
+          const pendingTraderObj = await database.findOne('userName', trimmedData.userName, database.collection.pendingTraders, {projection: {_id: 1}})
+ 
+          const token = utilities.jwt('sign', {userID: pendingTraderObj._id.toString()})
 
           //send token to client
           utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entaMarketToken: token}, true)
@@ -81,53 +81,63 @@ traderControllers.verifyOtp = ('/signup/account-verification', async (req, res)=
   const token = req.headers.authorization.split(' ')[1] 
  
   if(utilities.jwt('verify', token).isVerified){
-    // Check if the id from the token exists
+    
+    
     try{
-      const decodedToken = utilities.jwt('verify', token).decodedToken
+      // Check if token is blacklisted
+      const isTokenBlacklisted = await database.findOne('token', token, database.collection.tokenBlacklist, {projection: {_id: 1}})
+      if(!isTokenBlacklisted){
+        // Check if the id from the token exists
+        const decodedToken = utilities.jwt('verify', token).decodedToken
 
-      const pendingTraderObj = await database.getDatabase().collection(database.collection.pendingTraders).findOne({_id: ObjectId(decodedToken.id)})
-      if(pendingTraderObj){
+        const pendingTraderObj = await database.getDatabase().collection(database.collection.pendingTraders).findOne({_id: ObjectId(decodedToken.userID)})
+        if(pendingTraderObj){
+          //Add token to blacklised tokens
+          await database.insertOne({token: token, createdAt: new Date()}, database.collection.tokenBlacklist)
         
-        //check if otp is in JSON format
-        if(utilities.isJSON(req.body)){
-          //parse the data
-          const parsedData = JSON.parse(req.body)
+          //check if otp is in JSON format
+          if(utilities.isJSON(req.body)){
+            //parse the data
+            const parsedData = JSON.parse(req.body)
 
-          //check if the OTP from the database matches the OTP from the client
-          if(pendingTraderObj.otp == parsedData.otp){
-            // transfer transfer pending trader from the pendingTrader collection to trader collection
-            const {_id, createdAt, otp, ...rest} = pendingTraderObj
-            const trader = new Trader(rest, false)
-            const savedTrader = await trader.save()
-            //delete the data in pendingTraders collection
-            await database.getDatabase().collection(database.collection.pendingTraders).deleteOne({_id: pendingTraderObj._id})
+            //check if the OTP from the database matches the OTP from the client
+            if(pendingTraderObj.otp == parsedData.otp){
+              // transfer transfer pending trader from the pendingTrader collection to trader collection
+              const {_id, createdAt, otp, ...rest} = pendingTraderObj
+              const trader = new Trader(rest, false)
+              const savedTrader = await trader.save()
+              //delete the data in pendingTraders collection
+              await database.deleteOne('_id', pendingTraderObj._id, database.collection.pendingTraders)
 
-            //send a new token
-            const traderObj = await database.getDatabase().collection(database.collection.traders).findOne({_id: savedTrader.insertedId}, {projection: {password: 0}})
-            traderObj._id = traderObj._id.toString()
-            traderObj.accountBalance = traderObj.accountBalance.toString()
-            const newToken = utilities.jwt('sign', {id: traderObj._id})
+              //send a new token
+              const traderObj = await database.findOne('_id', savedTrader.insertedId, database.collection.traders, {projection: {_id: 1}})
+              traderObj._id = traderObj._id.toString()
+              const newToken = utilities.jwt('sign', {id: traderObj._id})
             
-            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, traderData: traderObj, entaMarketToken: newToken}, true )
+              utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, entaMarketToken: newToken}, true )
   
+            }
+            else{
+              utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This OTP doesn't match the user`}, true )
+              return
+            }
+
           }
           else{
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This OTP doesn't match the user`}, true )
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid format, payload should be in JSON format`}, true )
             return
           }
-
         }
         else{
-          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid format, payload should be in JSON format`}, true )
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`}, true )
+          return
         }
-        
-
+       
       }
       else{
-        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`}, true )
-        return
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Unauthorized'}, true )
       }
-       
+    
     }
     catch(err){
       console.log(err)
