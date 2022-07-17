@@ -4,9 +4,9 @@ const Trader = require('../models/trader')
 const email = require('../lib/email')
 const {ObjectId}  = require('mongodb')//.ObjectId
 
-const traderControllers = {}
+const traderController = {}
 
-traderControllers.signup = ('/signup', async (req, res)=>{
+traderController.signup = ('/signup', async (req, res)=>{
   try{
     // check if incoming data is in JSON format
     if(utilities.isJSON(req.body)){
@@ -131,4 +131,6 @@ traderControllers.verifyOtp = ('/signup/account-verification', async (req, res)=
   
 })
 
-module.exports = traderControllers
+traderController
+
+module.exports = traderController
