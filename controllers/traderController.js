@@ -37,8 +37,7 @@ traderController.signup = ('/signup', async (req, res)=>{
 
           //Send JWT
           //fetch the user ID from the database
-          const pendingTraderObj = await database.findOne({userName: trimmedData.userName}, database.collection.pendingTraders, ["_id"])
- 
+          const pendingTraderObj = await database.findOne({userName: trimmedData.userName}, database.collection.pendingTraders, ["_id"], 1)
           const token = utilities.jwt('sign', {userID: pendingTraderObj._id.toString()})
 
           //send token to client
@@ -79,9 +78,7 @@ traderController.verifyOtp = ('/signup/account-verification', async (req, res)=>
   
   try{ 
     // Check if the id from the token exists
-    console.log(decodedToken)
     const pendingTraderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.pendingTraders)
-    console.log(pendingTraderObj) 
     if(pendingTraderObj){
 
       //check if otp is in JSON format
@@ -99,7 +96,7 @@ traderController.verifyOtp = ('/signup/account-verification', async (req, res)=>
           await database.deleteOne({_id: pendingTraderObj._id}, database.collection.pendingTraders)
 
           //send a new token
-          const traderObj = await database.findOne({_id: savedTrader.insertedId}, database.collection.traders, ["_id"])
+          const traderObj = await database.findOne({_id: savedTrader.insertedId}, database.collection.traders, ["_id"], 1)
           traderObj._id = traderObj._id.toString()
           const newToken = utilities.jwt('sign', {userID: traderObj._id})
             
@@ -146,7 +143,7 @@ traderController.resendOtp = ('/signup/resend-otp', async (req, res)=>{
   try{
     
     // Check if the id from the token exists
-    const pendingTraderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.pendingTraders, ["_id", "firstName", "lastName", "email"])
+    const pendingTraderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.pendingTraders, ["_id", "firstName", "lastName", "email"], 1)
     if(pendingTraderObj){
 
       //Generate new OTP for trader
