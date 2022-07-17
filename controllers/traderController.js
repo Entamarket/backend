@@ -37,7 +37,7 @@ traderController.signup = ('/signup', async (req, res)=>{
 
           //Send JWT
           //fetch the user ID from the database
-          const pendingTraderObj = await database.findOne('userName', trimmedData.userName, database.collection.pendingTraders, {projection: {_id: 1}})
+          const pendingTraderObj = await database.findOne({userName: trimmedData.userName}, database.collection.pendingTraders, ["_id"])
  
           const token = utilities.jwt('sign', {userID: pendingTraderObj._id.toString()})
 
@@ -73,15 +73,15 @@ traderController.signup = ('/signup', async (req, res)=>{
 })
 
 traderController.verifyOtp = ('/signup/account-verification', async (req, res)=>{
+  // Extract token
+  const token = req.headers.authorization.split(' ')[1] 
+  const decodedToken = utilities.jwt('verify', token).decodedToken
   
-  try{
-    // Extract token
-    const token = req.headers.authorization.split(' ')[1] 
-      
+  try{ 
     // Check if the id from the token exists
-    const decodedToken = utilities.jwt('verify', token).decodedToken
-
-    const pendingTraderObj = await database.findOne('_id', ObjectId(decodedToken.userID), database.collection.pendingTraders) 
+    console.log(decodedToken)
+    const pendingTraderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.pendingTraders)
+    console.log(pendingTraderObj) 
     if(pendingTraderObj){
 
       //check if otp is in JSON format
@@ -96,76 +96,88 @@ traderController.verifyOtp = ('/signup/account-verification', async (req, res)=>
           const trader = new Trader(rest, false)
           const savedTrader = await trader.save()
           //delete the data in pendingTraders collection
-          await database.deleteOne('_id', pendingTraderObj._id, database.collection.pendingTraders)
+          await database.deleteOne({_id: pendingTraderObj._id}, database.collection.pendingTraders)
 
           //send a new token
-          const traderObj = await database.findOne('_id', savedTrader.insertedId, database.collection.traders, {projection: {_id: 1}})
+          const traderObj = await database.findOne({_id: savedTrader.insertedId}, database.collection.traders, ["_id"])
           traderObj._id = traderObj._id.toString()
-          const newToken = utilities.jwt('sign', {id: traderObj._id})
+          const newToken = utilities.jwt('sign', {userID: traderObj._id})
             
           utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, entaMarketToken: newToken}, true )
   
         }
         else{
-          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This OTP doesn't match the user`}, true )
+          //create token 
+          const newToken = utilities.jwt('sign', {userID: decodedToken.userID})
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This OTP doesn't match the user`, entaMarketToken: newToken}, true )
           return
         }
 
       }
       else{
-        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid format, payload should be in JSON format`}, true )
+        //create token 
+        const newToken = utilities.jwt('sign', {userID: decodedToken.userID})
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid format, payload should be in JSON format`, entaMarketToken: newToken}, true )
         return
       }
     }
     else{
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`}, true )
+      //create token 
+      const newToken = utilities.jwt('sign', {userID: decodedToken.userID})
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`, entaMarketToken: newToken}, true )
       return
     }
        
   }
   catch(err){
     console.log(err)
-    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
+    const newToken = utilities.jwt('sign', {userID: decodedToken.userID})
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entaMarketToken: newToken}, true )
     return
   }
   
 })
 
 traderController.resendOtp = ('/signup/resend-otp', async (req, res)=>{
+  //extract the jwt
+  const token = req.headers.authorization.split(' ')[1]
+  //decode jwt
+  const decodedToken = utilities.jwt('verify', token).decodedToken
   try{
-    //extract the jwt
-    const token = req.headers.authorization.split(' ')[1]
-
+    
     // Check if the id from the token exists
-    const decodedToken = utilities.jwt('verify', token).decodedToken
-
-    const pendingTraderObj = await database.findOne('_id', ObjectId(decodedToken.userID), database.collection.pendingTraders, {projection: {_id: 1, firstName: 1, lastName: 1, email: 1}})
+    const pendingTraderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.pendingTraders, ["_id", "firstName", "lastName", "email"])
     if(pendingTraderObj){
 
       //Generate new OTP for trader
       const newOtp = utilities.otpMaker()
 
       //update the OTP in database by replacing it with the new OTP
-      await database.getDatabase().collection(database.collection.pendingTraders).updateOne({_id: pendingTraderObj._id}, {$set: {otp: newOtp}})
-
+      await database.updateOne({_id: pendingTraderObj._id}, database.collection.pendingTraders, {otp: newOtp})
+      
       //send new OTP to email
       await email.send('entamarketltd@gmail.com', pendingTraderObj.email, `hello ${pendingTraderObj.firstName} ${pendingTraderObj.lastName}, please verify your email with this OTP: ${newOtp}`, pendingTraderObj.firstName)
 
       //Get new token and send
-      const newToken =  utilities.jwt('sign', {id: pendingTraderObj._id})
+      const newToken =  utilities.jwt('sign', {userID: pendingTraderObj._id})
 
       utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entaMarketToken: newToken}, true )
 
     }
     else{
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`}, true )
+      //create token 
+      const newToken = utilities.jwt('sign', {userID: decodedToken.userID})
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`, entaMarketToken: newToken}, true )
       return
     }
 
   }
   catch(err){
     console.log(err)
-    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
+    //create token 
+    const newToken = utilities.jwt('sign', {userID: decodedToken.userID})
+
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entaMarketToken: newToken}, true )
     return
   }
 })
