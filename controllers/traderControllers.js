@@ -7,22 +7,21 @@ const {ObjectId}  = require('mongodb')//.ObjectId
 const traderControllers = {}
 
 traderControllers.signup = ('/signup', async (req, res)=>{
-
-  // check if incoming data is in JSON format
-  if(utilities.isJSON(req.body)){
-    //parse incoming data
-    const parsedData = JSON.parse(req.body)
+  try{
+    // check if incoming data is in JSON format
+    if(utilities.isJSON(req.body)){
+      //parse incoming data
+      const parsedData = JSON.parse(req.body)
     
-    //check if parsed data is Valid
-    if(utilities.validator(parsedData, ['firstName', 'lastName', 'email', 'userName', 'phoneNumber', 'password']).isValid){
-      //remove all white spaces from user data if any
-      const trimmedData = utilities.trimmer(parsedData)
+      //check if parsed data is Valid
+      if(utilities.validator(parsedData, ['firstName', 'lastName', 'email', 'userName', 'phoneNumber', 'password']).isValid){
+        //remove all white spaces from user data if any
+        const trimmedData = utilities.trimmer(parsedData)
 
-      //hash the password
-      trimmedData.password = utilities.dataHasher(trimmedData.password)
+        //hash the password
+        trimmedData.password = utilities.dataHasher(trimmedData.password)
 
-      //check if userName, email or phone number exists in database
-      try{
+        //check if userName, email or phone number exists in database
       
         const existingUser = await database.checkForExistingUser(trimmedData)
 
@@ -50,104 +49,83 @@ traderControllers.signup = ('/signup', async (req, res)=>{
           utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `this ${existingUser.userDetail} already exists`}, true)
           return
         }
-
-      }
-      catch(err){
-        console.log(err)
-        
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
-        return
-      }
-       
-    }
-    else{
-      const errorObj = utilities.validator(parsedData, ['firstName', 'lastName', 'email', 'userName', 'phoneNumber', 'password'])
-      errorObj.statusCode = 400
-
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, errorObj, true)
-      return
-    }
-    
-  }
-  else{
-    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid data format, data should be in JSON form'}, true )
-      return
-  }
-    
-})
-
-traderControllers.verifyOtp = ('/signup/account-verification', async (req, res)=>{
-  // Check if the token is valid
-  const token = req.headers.authorization.split(' ')[1] 
- 
-  if(utilities.jwt('verify', token).isVerified){
-    
-    
-    try{
-      // Check if token is blacklisted
-      const isTokenBlacklisted = await database.findOne('token', token, database.collection.tokenBlacklist, {projection: {_id: 1}})
-      if(!isTokenBlacklisted){
-        // Check if the id from the token exists
-        const decodedToken = utilities.jwt('verify', token).decodedToken
-
-        const pendingTraderObj = await database.getDatabase().collection(database.collection.pendingTraders).findOne({_id: ObjectId(decodedToken.userID)})
-        if(pendingTraderObj){
-          //Add token to blacklised tokens
-          await database.insertOne({token: token, createdAt: new Date()}, database.collection.tokenBlacklist)
-        
-          //check if otp is in JSON format
-          if(utilities.isJSON(req.body)){
-            //parse the data
-            const parsedData = JSON.parse(req.body)
-
-            //check if the OTP from the database matches the OTP from the client
-            if(pendingTraderObj.otp == parsedData.otp){
-              // transfer transfer pending trader from the pendingTrader collection to trader collection
-              const {_id, createdAt, otp, ...rest} = pendingTraderObj
-              const trader = new Trader(rest, false)
-              const savedTrader = await trader.save()
-              //delete the data in pendingTraders collection
-              await database.deleteOne('_id', pendingTraderObj._id, database.collection.pendingTraders)
-
-              //send a new token
-              const traderObj = await database.findOne('_id', savedTrader.insertedId, database.collection.traders, {projection: {_id: 1}})
-              traderObj._id = traderObj._id.toString()
-              const newToken = utilities.jwt('sign', {id: traderObj._id})
-            
-              utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, entaMarketToken: newToken}, true )
-  
-            }
-            else{
-              utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This OTP doesn't match the user`}, true )
-              return
-            }
-
-          }
-          else{
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid format, payload should be in JSON format`}, true )
-            return
-          }
-        }
-        else{
-          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`}, true )
-          return
-        }
        
       }
       else{
-        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Unauthorized'}, true )
+        const errorObj = utilities.validator(parsedData, ['firstName', 'lastName', 'email', 'userName', 'phoneNumber', 'password'])
+        errorObj.statusCode = 400
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, errorObj, true)
+        return
       }
     
     }
-    catch(err){
-      console.log(err)
-      utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
+    else{
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid data format, data should be in JSON form'}, true )
+        return
+    }
+
+  }
+  catch(err){
+    console.log(err)    
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+    return
+  }   
+})
+
+traderControllers.verifyOtp = ('/signup/account-verification', async (req, res)=>{
+  
+  try{
+    // Extract token
+    const token = req.headers.authorization.split(' ')[1] 
+      
+    // Check if the id from the token exists
+    const decodedToken = utilities.jwt('verify', token).decodedToken
+
+    const pendingTraderObj = await database.getDatabase().collection(database.collection.pendingTraders).findOne({_id: ObjectId(decodedToken.userID)})
+    if(pendingTraderObj){
+
+      //check if otp is in JSON format
+      if(utilities.isJSON(req.body)){
+        //parse the data
+        const parsedData = JSON.parse(req.body)
+
+        //check if the OTP from the database matches the OTP from the client
+        if(pendingTraderObj.otp == parsedData.otp){
+          // transfer transfer pending trader from the pendingTrader collection to trader collection
+          const {_id, createdAt, otp, ...rest} = pendingTraderObj
+          const trader = new Trader(rest, false)
+          const savedTrader = await trader.save()
+          //delete the data in pendingTraders collection
+          await database.deleteOne('_id', pendingTraderObj._id, database.collection.pendingTraders)
+
+          //send a new token
+          const traderObj = await database.findOne('_id', savedTrader.insertedId, database.collection.traders, {projection: {_id: 1}})
+          traderObj._id = traderObj._id.toString()
+          const newToken = utilities.jwt('sign', {id: traderObj._id})
+            
+          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, entaMarketToken: newToken}, true )
+  
+        }
+        else{
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This OTP doesn't match the user`}, true )
+          return
+        }
+
+      }
+      else{
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid format, payload should be in JSON format`}, true )
+        return
+      }
+    }
+    else{
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`}, true )
       return
     }
-  
+       
   }
-  else{
-    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Unauthorized'}, true )
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
     return
   }
   
