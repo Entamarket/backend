@@ -32,9 +32,9 @@ traderController.signup = ('/signup', async (req, res)=>{
 
           await pendingTrader.save()
 
-          //send an sms to the trader for verification of phone number
+          //send an email to the trader for verification of phone number
           await email.send('entamarketltd@gmail.com', trimmedData.email, `hello ${trimmedData.firstName} ${trimmedData.lastName}, please verify your phone number with this OTP: ${trimmedData.otp}`, trimmedData.firstName)
-      
+
           //Send JWT
           //fetch the user ID from the database
           const pendingTraderObj = await database.findOne('userName', trimmedData.userName, database.collection.pendingTraders, {projection: {_id: 1}})
@@ -43,7 +43,7 @@ traderController.signup = ('/signup', async (req, res)=>{
 
           //send token to client
           utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entaMarketToken: token}, true)
-
+      
         }
         else{
           utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `this ${existingUser.userDetail} already exists`}, true)
@@ -72,7 +72,7 @@ traderController.signup = ('/signup', async (req, res)=>{
   }   
 })
 
-traderControllers.verifyOtp = ('/signup/account-verification', async (req, res)=>{
+traderController.verifyOtp = ('/signup/account-verification', async (req, res)=>{
   
   try{
     // Extract token
@@ -81,7 +81,7 @@ traderControllers.verifyOtp = ('/signup/account-verification', async (req, res)=
     // Check if the id from the token exists
     const decodedToken = utilities.jwt('verify', token).decodedToken
 
-    const pendingTraderObj = await database.getDatabase().collection(database.collection.pendingTraders).findOne({_id: ObjectId(decodedToken.userID)})
+    const pendingTraderObj = await database.findOne('_id', ObjectId(decodedToken.userID), database.collection.pendingTraders) 
     if(pendingTraderObj){
 
       //check if otp is in JSON format
@@ -131,6 +131,43 @@ traderControllers.verifyOtp = ('/signup/account-verification', async (req, res)=
   
 })
 
-traderController
+traderController.resendOtp = ('/signup/resend-otp', async (req, res)=>{
+  try{
+    //extract the jwt
+    const token = req.headers.authorization.split(' ')[1]
+
+    // Check if the id from the token exists
+    const decodedToken = utilities.jwt('verify', token).decodedToken
+
+    const pendingTraderObj = await database.findOne('_id', ObjectId(decodedToken.userID), database.collection.pendingTraders, {projection: {_id: 1, firstName: 1, lastName: 1, email: 1}})
+    if(pendingTraderObj){
+
+      //Generate new OTP for trader
+      const newOtp = utilities.otpMaker()
+
+      //update the OTP in database by replacing it with the new OTP
+      await database.getDatabase().collection(database.collection.pendingTraders).updateOne({_id: pendingTraderObj._id}, {$set: {otp: newOtp}})
+
+      //send new OTP to email
+      await email.send('entamarketltd@gmail.com', pendingTraderObj.email, `hello ${pendingTraderObj.firstName} ${pendingTraderObj.lastName}, please verify your email with this OTP: ${newOtp}`, pendingTraderObj.firstName)
+
+      //Get new token and send
+      const newToken =  utilities.jwt('sign', {id: pendingTraderObj._id})
+
+      utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entaMarketToken: newToken}, true )
+
+    }
+    else{
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`}, true )
+      return
+    }
+
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
+    return
+  }
+})
 
 module.exports = traderController
