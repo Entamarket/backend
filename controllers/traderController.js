@@ -60,7 +60,7 @@ traderController.signup = ('/signup', async (req, res)=>{
     }
     else{
       utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid data format, data should be in JSON form'}, true )
-        return
+      return
     }
 
   }
@@ -145,6 +145,7 @@ traderController.resendOtp = ('/signup/resend-otp', async (req, res)=>{
     // Check if the id from the token exists
     const pendingTraderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.pendingTraders, ["_id", "firstName", "lastName", "email"], 1)
     if(pendingTraderObj){
+      pendingTraderObj._id = pendingTraderObj._id.toString()
 
       //Generate new OTP for trader
       const newOtp = utilities.otpMaker()
@@ -175,6 +176,93 @@ traderController.resendOtp = ('/signup/resend-otp', async (req, res)=>{
     const newToken = utilities.jwt('sign', {userID: decodedToken.userID})
 
     utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entaMarketToken: newToken}, true )
+    return
+  }
+})
+
+traderController.dashboard = ('/dashboard', async (req, res)=>{
+  //extract the jwt
+  const token = req.headers.authorization.split(' ')[1]
+  //decode jwt
+  const decodedToken = utilities.jwt('verify', token).decodedToken
+
+  try{
+    // Check if the id from the token exists
+    const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ["password"], 0)
+    if(traderObj){
+
+      traderObj._id = traderObj._id.toString()
+      traderObj.accountBalance = traderObj.accountBalance.toString()
+
+      //Get new token and send
+      const newToken =  utilities.jwt('sign', {userID: traderObj._id})
+      utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, traderData: traderObj, entaMarketToken: newToken}, true )
+    }
+    else{
+      //create token 
+      const newToken = utilities.jwt('sign', {userID: decodedToken.userID})
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`, entaMarketToken: newToken}, true )
+      return
+    }
+
+  }
+  catch(err){
+    console.log(err)
+    //create token 
+    const newToken = utilities.jwt('sign', {userID: decodedToken.userID})
+
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entaMarketToken: newToken}, true )
+    return
+  }
+
+})
+
+traderController.login = ('/login', async (req, res)=>{
+  try{
+    //check if incoming data is in JSON format
+    if(utilities.isJSON(req.body)){
+      //Extract data
+      const traderLoginData = JSON.parse(req.body)
+      //check if data is valid
+      if(utilities.validator(traderLoginData, ['id', 'password']).isValid){
+        //remove white spaces from the data
+        const trimmedLoginData = utilities.trimmer(traderLoginData)
+        //hash the password
+        trimmedLoginData.password = utilities.dataHasher(trimmedLoginData.password)
+
+        //Check if the ID exists in the database
+        const traderObj = await database.findOne({$or: [{email: trimmedLoginData.id}, {phoneNumber: trimmedLoginData.id}]}, database.collection.traders, ['_id', 'password'], 1)
+        if(traderObj){
+          traderObj._id = traderObj._id.toString()
+          //check if the password from the client matches the password from the database
+          if(trimmedLoginData.password === traderObj.password){
+            //create a token and send
+            const token = utilities.jwt('sign', {userID: traderObj._id})
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entaMarketToken: token}, true )
+          }
+          else{
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid username or password'}, true )
+            return
+          }
+        }
+        else{
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid username or password'}, true )
+          return
+        }
+      }
+      else{
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid username or password, make sure your login details are in string form'}, true )
+        return
+      } 
+    }
+    else{
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid data format, data should be in JSON form'}, true )
+      return
+    }
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
     return
   }
 })
