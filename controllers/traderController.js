@@ -241,17 +241,17 @@ traderController.login = ('/login', async (req, res)=>{
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entaMarketToken: token}, true )
           }
           else{
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid username or password'}, true )
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid user ID or password'}, true )
             return
           }
         }
         else{
-          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid username or password'}, true )
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid user ID or password'}, true )
           return
         }
       }
       else{
-        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid username or password, make sure your login details are in string form'}, true )
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid user ID or password, make sure your login details are in string form'}, true )
         return
       } 
     }
