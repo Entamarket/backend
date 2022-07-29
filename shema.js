@@ -4,7 +4,7 @@ db.createCollection("pendingTraders", {
     validator: {
         $jsonSchema:{
             bsonType: 'object',
-            required: ['firstName', 'lastName', 'userName', 'email', 'phoneNumber', 'password', 'createdAt', 'otp', 'isEmailVerified'],
+            required: ['firstName', 'lastName', 'username', 'email', 'phoneNumber', 'password', 'createdAt', 'otp', 'isEmailVerified'],
             properties:{
                 firstName: {
                     bsonType: 'string',
@@ -16,7 +16,7 @@ db.createCollection("pendingTraders", {
                     description: `must be a string and it's required`
                 },
 
-                userName: {
+                username: {
                     bsonType: 'string',
                     pattern: '^[a-zA-Z][a-zA-Z0-9-_]+$',
                     description: `must be a string and must start with an alphabet and it's required`  

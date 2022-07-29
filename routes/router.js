@@ -1,16 +1,20 @@
 const express = require('express')
 const router = express.Router()
 
-const traderController = require('../controllers/traderController')
-const {isJwtValid} = require('../lib/middleware')
+const traderControllerAuth = require('../controllers/traderController/traderControllerAuth')
+const traderControllerDashboard = require('../controllers/traderController/traderControllerDashboard')
+const shopController = require('../controllers/shopController/shopController')
+const {isJwtValid, decodeToken, isTokenIdValid, isJSON} = require('../lib/middleware')
 
 
 
-router.post('/trader/signup', traderController.signup)
-router.put('/trader/signup/account-verification', isJwtValid, traderController.verifyOtp)
-router.get('/trader/signup/resend-otp', isJwtValid, traderController.resendOtp)
-router.get('/trader/dashboard', isJwtValid, traderController.dashboard)
-router.put('/trader/login', traderController.login)
+router.post('/trader/signup', traderControllerAuth.signup)
+router.put('/trader/signup/account-verification', isJwtValid, traderControllerAuth.verifyOtp)
+router.get('/trader/signup/resend-otp', isJwtValid, traderControllerAuth.resendOtp)
+router.put('/trader/login', traderControllerAuth.login)
+router.get('/trader/dashboard', isJwtValid, traderControllerDashboard.home)
+
+router.post('/shop/create-shop', isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.createShop)
 
 
 module.exports = router
