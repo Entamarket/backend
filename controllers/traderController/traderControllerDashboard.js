@@ -15,7 +15,8 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
       
       let traderObj = await database.db.collection(database.collection.traders).aggregate([
         {$match: {_id: ObjectId(decodedToken.userID)}}, 
-        {$lookup: {from: database.collection.shops, localField: "shops", foreignField: "_id", as: "shops"}}
+        {$lookup: {from: database.collection.shops, localField: "shops", foreignField: "_id", as: "shops"}},
+        {$project: {password: 0}}
       ]).toArray()
 
       traderObj = traderObj[0]

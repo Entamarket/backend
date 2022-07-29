@@ -23,27 +23,45 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
             // Add the shop username
             payload.username = payload.name.replace(" ", "_") + "/" + ownerObj.username
 
-            //save shop
-            const savedShop = await new Shop(payload).save()
+            //Check if shop username exists
+            const doesUsernameExist = await database.findOne({username: payload.username}, database.collection.shops, ['_id'], 1)
+            console.log(doesUsernameExist)
+            if(!doesUsernameExist){
+                //save shop
+                const savedShop = await new Shop(payload).save()
 
-            //update owners shopArray
-            await database.db.collection(database.collection.traders).updateOne({_id: payload.owner}, {$addToSet: {shops: savedShop.insertedId}})
+                //update owners shopArray
+                await database.db.collection(database.collection.traders).updateOne({_id: payload.owner}, {$addToSet: {shops: savedShop.insertedId}})
 
-            //create newToken
-            const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
+                //get shop object
+                const shopObj = await database.findOne({_id: savedShop.insertedId}, database.collection.shops)
 
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
+                //create newToken
+                const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
 
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 200, shopData: shopObj, entamarketToken: newToken}, true )
+            }
+            else{
+                //create newToken
+                const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `You have a shop with this name already, try giving your new shop a name you haven't given any other shop`, entamarketToken: newToken}, true )
+                return
+            }
+            
         }
         else{
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid data, all data should be in string format'}, true )
+            //create newToken
+            const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid data, all data should be in string format', entamarketToken: newToken}, true )
             return
         }
        
     }
     catch(err){
-        console.log(err)    
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        console.log(err) 
+        //create newToken
+        const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
         return
     }
     

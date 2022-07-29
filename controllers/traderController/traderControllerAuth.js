@@ -86,29 +86,40 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
         //parse the data
         const parsedData = JSON.parse(req.body)
 
-        //check if the OTP from the database matches the OTP from the client
-        if(pendingTraderObj.otp == parsedData.otp){
-          // transfer transfer pending trader from the pendingTrader collection to trader collection
-          const {_id, createdAt, otp, ...rest} = pendingTraderObj
-          const trader = new Trader(rest, false)
-          const savedTrader = await trader.save()
-          //delete the data in pendingTraders collection
-          await database.deleteOne({_id: pendingTraderObj._id}, database.collection.pendingTraders)
+        //check if OTP is valid
+        if(utilities.validator(parsedData, ["otp"]).isValid){
+          //check if the OTP from the database matches the OTP from the client
+          if(pendingTraderObj.otp == parsedData.otp){
+            // transfer transfer pending trader from the pendingTrader collection to trader collection
+            const {_id, createdAt, otp, ...rest} = pendingTraderObj
+            const trader = new Trader(rest, false)
+            const savedTrader = await trader.save()
+            //delete the data in pendingTraders collection
+            await database.deleteOne({_id: pendingTraderObj._id}, database.collection.pendingTraders)
 
-          //send a new token
-          const traderObj = await database.findOne({_id: savedTrader.insertedId}, database.collection.traders, ["_id"], 1)
-          traderObj._id = traderObj._id.toString()
-          const newToken = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
+            //send a new token
+            const traderObj = await database.findOne({_id: savedTrader.insertedId}, database.collection.traders, ["_id"], 1)
+            traderObj._id = traderObj._id.toString()
+            const newToken = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
             
-          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, entaMarketToken: newToken}, true )
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, entaMarketToken: newToken}, true )
   
+          }
+          else{
+            //create token 
+            const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "pendingTrader"})
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This OTP doesn't match the user`, entaMarketToken: newToken}, true )
+            return
+          }
         }
         else{
           //create token 
           const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "pendingTrader"})
-          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This OTP doesn't match the user`, entaMarketToken: newToken}, true )
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `OTP should be a string`, entaMarketToken: newToken}, true )
           return
         }
+
+        
 
       }
       else{
