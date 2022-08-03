@@ -15,6 +15,8 @@ router.put('/trader/login', traderControllerAuth.login)
 router.get('/trader/dashboard', isJwtValid, traderControllerDashboard.home)
 
 router.post('/shop/create-shop', isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.createShop)
+router.put('/shop/update-shop', isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.updateShop)
+router.delete('/shop/delete-shop', isJwtValid, decodeToken, isTokenIdValid, shopController.deleteShop)
 
 
 module.exports = router

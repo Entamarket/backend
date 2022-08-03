@@ -39,7 +39,7 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
                 //create newToken
                 const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
 
-                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 200, shopData: shopObj, entamarketToken: newToken}, true )
+                utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, shopData: shopObj, entamarketToken: newToken}, true )
             }
             else{
                 //create newToken
@@ -64,10 +64,44 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
         utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
         return
     }
-    
+})
+
+shopController.updateShop = ('/update-shop', async (req, res)=>{
+
+    //Extract decoded token
+    const decodedToken = req.decodedToken
+
+    //Extract payload from body
+    const payload = JSON.parse(req.body)
+    const {shopID, ...rest} = payload
+           
+    try{
+        //Check if data in body is valid
+        if(utilities.validator(payload, ["name", "category", "shopID"]).isValid){
+            //update the shop
+            await database.updateOne({_id: ObjectId(shopID)}, database.collection.shops, rest)
+
+            //create newToken
+            const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
+        }
+        else{
+            //create newToken
+            const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid data, all data should be in string format', entamarketToken: newToken}, true )
+            return
+        }
+    }
+    catch(err){
+        console.log(err) 
+        //create newToken
+        const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        return
+    }
 
 })
 
-
+shopController.updateShop = ('/delete-shop', async (req, res, nex)=>{})
 
 module.exports = shopController
