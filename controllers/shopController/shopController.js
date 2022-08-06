@@ -150,6 +150,9 @@ shopController.deleteShop = ('/delete-shop', async (req, res)=>{
         const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops, ['owner'], 1)
     
         if(shopObj?.owner?.toString() == decodedToken.userID){
+            //Remove ID from trader shop array
+            await database.db.collection(database.collection.traders).updateOne({_id: ObjectId(decodedToken.userID)}, {$pull: {shops: ObjectId(shopID)}})
+            
             //delete the shop
             await database.deleteOne({_id: ObjectId(shopID)}, database.collection.shops)
         
