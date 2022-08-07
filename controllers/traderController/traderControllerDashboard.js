@@ -26,12 +26,12 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
   
         //Get new token and send
         const newToken =  utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, traderData: traderObj, entaMarketToken: newToken}, true )
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, traderData: traderObj, entamarketToken: newToken}, true )
       }
       else{
         //create token 
         const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
-        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`, entaMarketToken: newToken}, true )
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`, entamarketToken: newToken}, true )
         return
       }
   
@@ -41,7 +41,7 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
       //create token 
       const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
   
-      utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entaMarketToken: newToken}, true )
+      utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entamarketToken: newToken}, true )
       return
     }
   

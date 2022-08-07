@@ -41,7 +41,7 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
           const token = utilities.jwt('sign', {userID: pendingTraderObj._id.toString(), tokenFor: "pendingTrader"})
 
           //send token to client
-          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entaMarketToken: token}, true)
+          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: token}, true)
       
         }
         else{
@@ -102,20 +102,20 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
             traderObj._id = traderObj._id.toString()
             const newToken = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
             
-            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, entaMarketToken: newToken}, true )
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, entamarketToken: newToken}, true )
   
           }
           else{
             //create token 
             const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "pendingTrader"})
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This OTP doesn't match the user`, entaMarketToken: newToken}, true )
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This OTP doesn't match the user`, entamarketToken: newToken}, true )
             return
           }
         }
         else{
           //create token 
           const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "pendingTrader"})
-          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `OTP should be a string`, entaMarketToken: newToken}, true )
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `OTP should be a string`, entamarketToken: newToken}, true )
           return
         }
 
@@ -125,14 +125,14 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
       else{
         //create token 
         const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "pendingTrader"})
-        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid format, payload should be in JSON format`, entaMarketToken: newToken}, true )
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid format, payload should be in JSON format`, entamarketToken: newToken}, true )
         return
       }
     }
     else{
       //create token 
       const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "pendingTrader"})
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`, entaMarketToken: newToken}, true )
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`, entamarketToken: newToken}, true )
       return
     }
        
@@ -140,7 +140,7 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
   catch(err){
     console.log(err)
     const newToken = utilities.jwt('sign', {userID: decodedToken.userID})
-    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entaMarketToken: newToken}, true )
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entamarketToken: newToken}, true )
     return
   }
   
@@ -170,13 +170,13 @@ traderControllerAuth.resendOtp = ('/signup/resend-otp', async (req, res)=>{
       //Get new token and send
       const newToken =  utilities.jwt('sign', {userID: pendingTraderObj._id, tokenFor: "pendingTrader"})
 
-      utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entaMarketToken: newToken}, true )
+      utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
 
     }
     else{
       //create token 
       const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "pendingTrader"})
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`, entaMarketToken: newToken}, true )
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`, entamarketToken: newToken}, true )
       return
     }
 
@@ -186,7 +186,7 @@ traderControllerAuth.resendOtp = ('/signup/resend-otp', async (req, res)=>{
     //create token 
     const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "pendingTrader"})
 
-    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entaMarketToken: newToken}, true )
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entamarketToken: newToken}, true )
     return
   }
 })
@@ -214,7 +214,7 @@ traderControllerAuth.login = ('/login', async (req, res)=>{
           if(trimmedLoginData.password === traderObj.password){
             //create a token and send
             const token = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
-            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entaMarketToken: token}, true )
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: token}, true )
           }
           else{
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid user ID or password'}, true )
