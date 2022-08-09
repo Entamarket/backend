@@ -60,3 +60,4 @@ db.createCollection("pendingTraders", {
         }
     }
 })
+

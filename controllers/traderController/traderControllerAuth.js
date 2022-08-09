@@ -1,3 +1,5 @@
+const fs = require('fs')
+const path = require('path')
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const Trader = require('../../models/trader')
@@ -96,6 +98,10 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
             const savedTrader = await trader.save()
             //delete the data in pendingTraders collection
             await database.deleteOne({_id: pendingTraderObj._id}, database.collection.pendingTraders)
+
+            //Create folder in multimedia
+           const dir = [__dirname, '..', '..', 'multimedia', 'traders', savedTrader.insertedId].join(path.sep)
+           fs.mkdirSync(dir)
 
             //send a new token
             const traderObj = await database.findOne({_id: savedTrader.insertedId}, database.collection.traders, ["_id"], 1)
