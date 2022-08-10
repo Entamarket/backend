@@ -1,5 +1,5 @@
-const fs = require('fs')
-const path = require('path')
+//const fs = require('fs')
+//const path = require('path')
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const {ObjectId}  = require('mongodb')
@@ -57,8 +57,8 @@ traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>
     await database.deleteMany({owner: ObjectId(decodedToken.userID)}, database.collection.shops)
 
     //delete trader multimedia folder
-    const dir = [__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID.toString()].join(path.sep)
-    await fs.promises.rmdir(dir, {recursive: true})
+    //const dir = [__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID.toString()].join(path.sep)
+    //await fs.promises.rmdir(dir, {recursive: true})
     
     //delete the account
     await database.deleteOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders)
