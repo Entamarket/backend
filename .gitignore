@@ -1,4 +1,4 @@
 /node_modules
 .env
-/shema.js
-test.js
+schema.js
+tests.js
