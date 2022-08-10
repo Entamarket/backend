@@ -7,14 +7,12 @@ const {ObjectId}  = require('mongodb')
 const traderControllerDashboard = {}
 
 traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
-  //extract the jwt
-  const token = req.headers.authorization.split(' ')[1]
-  //decode jwt
-  const decodedToken = utilities.jwt('verify', token).decodedToken
+  
+  // extract decoded token
+  const decodedToken = req.decodedToken
   
   try{
-    // Check if the id from the token exists
-      
+    //extract trader object
     let traderObj = await database.db.collection(database.collection.traders).aggregate([
       {$match: {_id: ObjectId(decodedToken.userID)}}, 
       {$lookup: {from: database.collection.shops, localField: "shops", foreignField: "_id", as: "shops"}},
@@ -32,7 +30,7 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
     }
     else{
       //create token 
-      const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
+      const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
       utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't exist`, entamarketToken: newToken}, true )
       return
     }
@@ -41,7 +39,7 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
   catch(err){
     console.log(err)
     //create token 
-    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
+    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
   
     utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entamarketToken: newToken}, true )
     return
@@ -70,7 +68,7 @@ traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>
   catch(err){
     console.log(err) 
     //create newToken
-    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})   
+    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})   
     utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
     return
 }

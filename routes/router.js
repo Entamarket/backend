@@ -8,11 +8,11 @@ const productController = require('../controllers/productController/productContr
 const {isJwtValid, decodeToken, isTokenIdValid, isJSON} = require('../lib/middleware')
 
 
-router.post('/trader/signup', traderControllerAuth.signup)
-router.put('/trader/signup/account-verification', isJwtValid, traderControllerAuth.verifyOtp)
-router.get('/trader/signup/resend-otp', isJwtValid, traderControllerAuth.resendOtp)
-router.put('/trader/login', traderControllerAuth.login)
-router.get('/trader/dashboard', isJwtValid, traderControllerDashboard.home)
+router.post('/trader/signup', isJSON, traderControllerAuth.signup)
+router.put('/trader/signup/account-verification', isJwtValid, decodeToken, isTokenIdValid, isJSON, traderControllerAuth.verifyOtp)
+router.get('/trader/signup/resend-otp', isJwtValid, decodeToken, isTokenIdValid, traderControllerAuth.resendOtp)
+router.put('/trader/login', isJSON, traderControllerAuth.login)
+router.get('/trader/dashboard', isJwtValid, decodeToken, isTokenIdValid, traderControllerDashboard.home)
 router.delete('/trader/dashboard/delete-account', isJwtValid, decodeToken, isTokenIdValid, traderControllerDashboard.deleteAccount)
 
 
