@@ -197,7 +197,7 @@ traderControllerAuth.login = ('/login', async (req, res)=>{
       }
     }
     else{
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid user ID or password, make sure your login details are in string form'}, true )
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid user ID or password'}, true )
       return
     } 
     
