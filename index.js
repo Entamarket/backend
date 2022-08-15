@@ -18,29 +18,31 @@ app.use((req, res, next)=>{
     next()
 })
 
-app.use((req, res, next)=>{
-    let buffer = ''
-    let exceededDataLimit = false
-    req.on('data', (dataStream)=>{
+//app.use('/multimedia/traders/62f6f60da622cd3f6303dfa7', express.static('multimedia/traders/62f6f60da622cd3f6303dfa7'))
 
-        if(Buffer.byteLength(dataStream, 'utf8') > Math.pow(2, 24)){
-            exceededDataLimit = true
-        }
-        buffer += dataStream
-    })
+// app.use((req, res, next)=>{
+//     let buffer = ''
+//     let exceededDataLimit = false
+//     req.on('data', (dataStream)=>{
 
-    req.on('end', ()=>{
-        if(!exceededDataLimit){
-            req.body = buffer
-            next()  
-        }
-        else{
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg:'Data sent is too large'}, true )
+//         if(Buffer.byteLength(dataStream, 'utf8') > Math.pow(2, 24)){
+//             exceededDataLimit = true
+//         }
+//         buffer += dataStream
+//     })
+
+//     req.on('end', ()=>{
+//         if(!exceededDataLimit){
+//             req.body = buffer
+//             next()  
+//         }
+//         else{
+//             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg:'Data sent is too large'}, true )
             
-        }
+//         }
         
-    })
-})
+//     })
+// })
 
 app.use(router)
 

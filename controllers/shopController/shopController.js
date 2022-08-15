@@ -1,13 +1,17 @@
 const {ObjectId}  = require('mongodb')
+const fs = require('fs')
+const path = require('path')
 const database = require('../../lib/database')
 const utilities = require('../../lib/utilities')
 const shopController = {}
 const Shop = require('../../models/shop')
 
 shopController.createShop = ('/create-shop', async (req, res)=>{
+    //Extract decoded token
+    const decodedToken = req.decodedToken
+
+    let newShopID;
     try{
-        //Extract decoded token
-        const decodedToken = req.decodedToken
 
         //Extract payload from body
         const payload = JSON.parse(req.body)
@@ -27,9 +31,14 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
             if(!doesUsernameExist){
                 //save shop
                 const savedShop = await new Shop(payload).save()
+                newShopID = savedShop.insertedId.toString()
 
                 //update owners shopArray
                 await database.db.collection(database.collection.traders).updateOne({_id: payload.owner}, {$addToSet: {shops: savedShop.insertedId}})
+                 
+
+                //create shop directory
+                fs.mkdirSync(path.join(__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID, `shop-${newShopID}`))
 
                 //get shop object
                 const shopObj = await database.findOne({_id: savedShop.insertedId}, database.collection.shops)
@@ -57,6 +66,11 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
     }
     catch(err){
         console.log(err) 
+        //delete shop from data base
+        await database.deleteOne({_id: ObjectId(newShopID)}, database.collection.shops)
+
+        //remove shop directory
+        fs.rmdirSync(path.join(__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID, `shop-${newShopID}`))
         //create newToken
         const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})   
         utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
@@ -88,7 +102,6 @@ shopController.updateShop = ('/update-shop', async (req, res)=>{
 
                     //check if username already exists
                     const doesUsernameExist = await database.findOne({username: rest.username}, database.collection.shops, ['_id'], 1)
-                    console.log(doesUsernameExist)
 
                     if(!doesUsernameExist){
                         //update the shop
@@ -152,6 +165,14 @@ shopController.deleteShop = ('/delete-shop', async (req, res)=>{
         if(shopObj?.owner?.toString() == decodedToken.userID){
             //Remove ID from trader shop array
             await database.db.collection(database.collection.traders).updateOne({_id: ObjectId(decodedToken.userID)}, {$pull: {shops: ObjectId(shopID)}})
+
+            //delete all products in the shop
+
+            await database.deleteMany({shopID: ObjectId(shopID)}, database.collection.products)
+
+            //delete shop directory
+            await fs.promises.rmdir(path.join(__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID, `shop-${shopID}`), {recursive: true})
+
             
             //delete the shop
             await database.deleteOne({_id: ObjectId(shopID)}, database.collection.shops)
