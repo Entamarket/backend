@@ -209,4 +209,21 @@ traderControllerAuth.login = ('/login', async (req, res)=>{
   }
 })
 
+traderControllerAuth.deletePendingTraderAccount = ('/pending-trader/delete', async(req, res)=>{
+  //extract decoded token
+  const decodedToken = req.decodedToken
+  try{
+    //delete pending trader
+    await database.deleteOne({_id: ObjectId(decodedToken.userID)}, database.collection.pendingTraders)
+
+    utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: 'Success'}, true )
+
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
+    return
+  }
+})
+
 module.exports = traderControllerAuth
