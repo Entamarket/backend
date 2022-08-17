@@ -5,7 +5,7 @@ const traderControllerAuth = require('../controllers/traderController/traderCont
 const traderControllerDashboard = require('../controllers/traderController/traderControllerDashboard')
 const shopController = require('../controllers/shopController/shopController')
 const productController = require('../controllers/productController/productController')
-const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia} = require('../lib/middleware')
+const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads} = require('../lib/middleware')
 
 
 router.use('/multimedia/traders', multimedia)
@@ -25,6 +25,7 @@ router.delete('/shop/delete-shop', isJwtValid, decodeToken, isTokenIdValid, shop
 
 
 router.post('/product/add-product', isJwtValid, decodeToken, isTokenIdValid, uploads, productController.addProduct)
+router.put('/product/update-product', isJwtValid, decodeToken, isTokenIdValid, updateUploads, productController.updateProduct)
 
 
 module.exports = router
