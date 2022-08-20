@@ -26,6 +26,7 @@ router.delete('/shop/delete-shop', isJwtValid, decodeToken, isTokenIdValid, shop
 
 router.post('/product/add-product', isJwtValid, decodeToken, isTokenIdValid, uploads, productController.addProduct)
 router.put('/product/update-product', isJwtValid, decodeToken, isTokenIdValid, updateUploads, productController.updateProduct)
+router.delete('/product/delete-product', isJwtValid, decodeToken, isTokenIdValid, productController.deleteProduct)
 
 
 module.exports = router

@@ -108,4 +108,42 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
     }
 })
 
+productController.deleteProduct = ('/delete-product', async (req, res)=>{
+    //extract decoded token
+    const decodedToken = req.decodedToken;
+    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
+    
+    try{
+        if(!(req.query.productID)) return utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid product ID`, entamarketToken: newToken}, true) 
+        //check if product belong to the owner
+        const productObj = await database.findOne({_id: ObjectId(req.query.productID)}, database.collection.products, ['images', 'owner', 'shopID'], 1)
+        
+        if(productObj?.owner.toString() === decodedToken.userID){
+            //remove product from the product array in it's shop
+            await database.db.collection(database.collection.shops).updateOne({_id: productObj.shopID}, {$pull:{products: productObj._id}})
+
+            //remove product images from server
+            for(let image of productObj.images){
+                await fs.promises.unlink(path.join(__dirname, '..', '..', image))
+            }
+
+            //delete product from database
+            await database.deleteOne({_id: productObj._id}, database.collection.products)
+
+            //send new token
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true)
+
+        }
+        else{
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This product does not belong to this trader`, entamarketToken: newToken}, true)
+        }
+
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+    }
+})
+
 module.exports = productController;
