@@ -47,7 +47,7 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
   
 })
 
-/*traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
+traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
   //get the decoded token
   const decodedToken = req.decodedToken
   //create token 
@@ -55,7 +55,7 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
   let payload = JSON.parse(req.body)
   try{
     //Check if the data sent is valid
-    if(utilities.validator(payload, ['firstName', 'lastName', 'username', 'email', 'phoneNumber']).isValid){
+    if(utilities.validator(payload, ['firstName', 'lastName', 'username', 'phoneNumber']).isValid){
 
       //remove all white spaces from user data if any
       payload = utilities.trimmer(payload)
@@ -90,12 +90,6 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
           errorArray.push(searchResult)
         }
       }
-      
-      if(errorArray.length < 1 && payload.email !== traderObj.email){
-        // check if this email is unique
-        const searchResult = await database.checkForExistingData(payload.email, 'email')
-        if(searchResult.doesUserDetailExist) errorArray.push(searchResult)
-      }
 
       if(errorArray.length < 1 && payload.phoneNumber !== traderObj.phoneNumber){
         // check if this phone number is unique
@@ -127,7 +121,7 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
     utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entamarketToken: newToken}, true )
     return
   }
-})*/
+})
 
 traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>{
   //extract decoded token
