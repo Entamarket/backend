@@ -21,7 +21,8 @@ productController.addProduct = ('/add-product', async (req, res)=>{
             //add an array of image paths to the body of the product
             const imagePaths = []
             for(let image of req.files){
-                imagePaths.push(image.path)
+                image.path = image.path.split('\\').join('/')
+                imagePaths.push(`https://entamarket-api.herokuapp.com/` + image.path)
             }
 
             req.body.images = imagePaths
