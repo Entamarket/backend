@@ -23,6 +23,7 @@ router.delete('/pending-trader/delete', isJwtValid, decodeToken, isTokenIdValid,
 router.post('/shop/create-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.createShop)
 router.put('/shop/update-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.updateShop)
 router.delete('/shop/delete-shop', isJwtValid, decodeToken, isTokenIdValid, shopController.deleteShop)
+router.get('/shop/get-shop', isJwtValid, decodeToken, isTokenIdValid, shopController.getShop)
 
 
 router.post('/product/add-product', isJwtValid, decodeToken, isTokenIdValid, uploads, productController.addProduct)

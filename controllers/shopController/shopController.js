@@ -200,4 +200,41 @@ shopController.deleteShop = ('/delete-shop', async (req, res)=>{
     
 })
 
+shopController.getShop = ('/get-shop', async (req, res)=>{
+    //extract decoded token shopID and make a new token
+    const decodedToken = req.decodedToken
+    const shopID = req.query.shopID
+    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
+
+    try{
+        // get shop object
+        //const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops)
+        let shopObj = await database.db.collection(database.collection.shops).aggregate([
+            {$match: {_id: ObjectId(shopID)}}, 
+            {$lookup: {from: database.collection.products, localField: "products", foreignField: "_id", as: "products"}}
+        ]).toArray()
+
+        shopObj = shopObj[0]
+
+        //check if trader owns the shop
+        if(shopObj && shopObj.owner.toString() === decodedToken.userID){
+            //send the shop object with all the products
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, shopData: shopObj, entamarketToken: newToken}, true)
+        }
+        else{
+            //send newToken
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `this shop doesn't belong to trader or this shop doesn't exist`, entamarketToken: newToken}, true )
+            return
+        }
+
+    }
+    catch(err){
+        console.log(err) 
+        //create newToken
+        const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        return
+    }
+})
+
 module.exports = shopController
