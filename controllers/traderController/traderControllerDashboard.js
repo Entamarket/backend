@@ -1,8 +1,10 @@
 const fs = require('fs')
 const path = require('path')
+const {ObjectId}  = require('mongodb')
+
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
-const {ObjectId}  = require('mongodb')
+const email = require('../../lib/email')
 
 const traderControllerDashboard = {}
 
@@ -61,7 +63,7 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
       payload = utilities.trimmer(payload)
 
       //get trader object
-      const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ['firstName', 'lastName', 'username', 'email', 'phoneNumber'], 1)
+      const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ['firstName', 'lastName', 'username', 'phoneNumber'], 1)
 
       //check if email, username and phone number of the payload are the same with the trader object, if they are the same, leave them like that but if they are different make sure that they are unique
       const errorArray = []
@@ -122,6 +124,163 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
     return
   }
 })
+
+traderControllerDashboard.updateEmail = ('/update-email', async (req, res)=>{
+  //get the decoded token
+  const decodedToken = req.decodedToken
+  //create token 
+  const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
+  let payload = JSON.parse(req.body)
+
+  try{
+    //Check if the data sent is valid
+    if(utilities.validator(payload, ['email']).isValid){
+
+      //remove all white spaces from user data if any
+      payload = utilities.trimmer(payload)
+
+      //get trader object
+      const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ['firstName', 'lastName'], 1)
+
+      //check if email is unique
+
+      const searchResult = await database.checkForExistingData(payload.email, 'email')
+      if(!(searchResult.doesUserDetailExist)){
+        //add create otp
+        const newOtp = utilities.otpMaker()
+
+        //add user to pendingUsersUpdates collection
+        await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'email', value: payload.email}}, database.collection.pendingUsersUpdates)
+        
+        //send the new otp to the new email
+        await email.send('entamarketltd@gmail.com', payload.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, traderObj.firstName)
+
+        //send token
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
+
+      } 
+      else{
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This email already exists`, entamarketToken: newToken}, true )
+        return
+      }
+
+    }
+    else{
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid data`, entamarketToken: newToken}, true )
+      return
+    }
+
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entamarketToken: newToken}, true )
+    return
+  }
+
+})
+
+traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, res)=>{
+  //get the decoded token
+  const decodedToken = req.decodedToken
+  //create token 
+  const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
+  let payload = JSON.parse(req.body)
+
+  try{
+    //check if payload is valid
+    if(utilities.validator(payload, ['otp']).isValid){
+      //extrract data from the pendingUsersUpdates collection
+      userObj = await database.findOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates, ['otp', 'dataToUpdate'], 1)
+
+      //check if payload otp matches the otp in the userObj collection
+      if(payload.otp === userObj.otp){
+        //update the email of the trader
+        await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
+
+        //delete user from pendingUsersUpdates collection
+        await database.deleteOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates)
+
+        //send token
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
+      }
+      else{
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This otp doesn't match the user`, entamarketToken: newToken}, true )
+        return
+      }
+
+    }
+    else{
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid data`, entamarketToken: newToken}, true )
+      return
+    }
+   
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entamarketToken: newToken}, true )
+    return
+  }
+
+
+})
+
+traderControllerDashboard.updatePassword = ('/update-password', async (req, res)=>{
+  //get the decoded token
+  const decodedToken = req.decodedToken
+  //create token 
+  const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
+  let payload = JSON.parse(req.body)
+
+  try{
+    //Check if the data sent is valid
+    if(utilities.validator(payload, ['oldPassword', 'newPassword']).isValid){
+
+      //remove all white spaces from user data if any
+      payload = utilities.trimmer(payload)
+
+      //get trader object
+      const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ['password', 'email', 'firstName', 'lastName'], 1)
+
+      //hash the old and new password
+      payload.oldPassword = utilities.dataHasher(payload.oldPassword)
+      payload.newPassword = utilities.dataHasher(payload.newPassword)
+
+      //check if old password in payload matches the password in the trader object
+      if(payload.oldPassword === traderObj.password){
+        //create new otp
+        const newOtp = utilities.otpMaker()
+
+        //insert the trader in the pendingUsersUpdates collection
+        await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'password', value: payload.newPassword}}, database.collection.pendingUsersUpdates)
+
+        //sent new otp to email
+        await email.send('entamarketltd@gmail.com', traderObj.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, traderObj.firstName)
+
+        //send token
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
+
+      }
+      else{
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Old password doesn't match the password of this trader`, entamarketToken: newToken}, true )
+        return
+      }
+
+    }
+    else{
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid data`, entamarketToken: newToken}, true )
+      return
+    }
+
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entamarketToken: newToken}, true )
+    return
+  }
+
+})
+
+
 
 traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>{
   //extract decoded token

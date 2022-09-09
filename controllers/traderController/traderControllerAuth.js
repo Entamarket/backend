@@ -1,10 +1,11 @@
 const fs = require('fs')
 const path = require('path')
+const {ObjectId}  = require('mongodb')
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const Trader = require('../../models/trader')
 const email = require('../../lib/email')
-const {ObjectId}  = require('mongodb')
+
 
 const traderControllerAuth = {}
 
@@ -201,6 +202,50 @@ traderControllerAuth.login = ('/login', async (req, res)=>{
       return
     } 
     
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
+    return
+  }
+})
+
+traderControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
+  let payload = JSON.parse(req.body)
+  try{
+    //check if data is valid
+    if(payload.newPassword.length >= 8 && utilities.validator(payload, ['email', 'newPassword']).isValid){
+      //remove all white spaces from user data if any
+      payload = utilities.trimmer(payload)
+      //hash pasword
+      payload.newPassword = utilities.dataHasher(payload.newPassword)
+
+      //get trader object with email
+      const traderObj = await database.findOne({email: payload.email}, database.collection.traders, ['_id', 'firstName', 'lastName'], 1)
+      if(traderObj){
+        //create new otp
+        const newOtp = utilities.otpMaker()
+
+        //insert trader in the pendingUsersUpdates collection
+        await database.insertOne({userID: traderObj._id, createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'password', value: payload.newPassword}}, database.collection.pendingUsersUpdates)
+
+        //send otp to trader email
+        await email.send('entamarketltd@gmail.com', payload.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, traderObj.firstName)
+
+        //create a token and send
+        const token = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: token}, true )
+      }
+      else{
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This email does not exist in database'}, true )
+        return
+      }
+
+    }
+    else{
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid data, make sure email is valid and password is at least 8 characters'}, true )
+      return
+    }
   }
   catch(err){
     console.log(err)
