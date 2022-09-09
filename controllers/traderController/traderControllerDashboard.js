@@ -134,35 +134,48 @@ traderControllerDashboard.updateEmail = ('/update-email', async (req, res)=>{
 
   try{
     //Check if the data sent is valid
-    if(utilities.validator(payload, ['email']).isValid){
+    if(utilities.validator(payload, ['email', 'password']).isValid){
 
       //remove all white spaces from user data if any
       payload = utilities.trimmer(payload)
 
+      //hash the password
+      payload.password = utilities.dataHasher(payload.password)
+
       //get trader object
-      const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ['firstName', 'lastName'], 1)
+      const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ['firstName', 'lastName', 'password'], 1)
 
-      //check if email is unique
+      //check if the payload password matches the password from the trader object
+      if(payload.password === traderObj.password){
 
-      const searchResult = await database.checkForExistingData(payload.email, 'email')
-      if(!(searchResult.doesUserDetailExist)){
-        //add create otp
-        const newOtp = utilities.otpMaker()
+        //check if email is unique
+        const searchResult = await database.checkForExistingData(payload.email, 'email')
+        if(!(searchResult.doesUserDetailExist)){
+          //add create otp
+          const newOtp = utilities.otpMaker()
 
-        //add user to pendingUsersUpdates collection
-        await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'email', value: payload.email}}, database.collection.pendingUsersUpdates)
+          //add user to pendingUsersUpdates collection
+          await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'email', value: payload.email}}, database.collection.pendingUsersUpdates)
         
-        //send the new otp to the new email
-        await email.send('entamarketltd@gmail.com', payload.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, traderObj.firstName)
+          //send the new otp to the new email
+          await email.send('entamarketltd@gmail.com', payload.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, traderObj.firstName)
 
-        //send token
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
+          //send token
+          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
 
-      } 
+        } 
+        else{
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This email already exists`, entamarketToken: newToken}, true )
+          return
+        }
+
+      }
       else{
-        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This email already exists`, entamarketToken: newToken}, true )
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid password`, entamarketToken: newToken}, true )
         return
       }
+
+    
 
     }
     else{
