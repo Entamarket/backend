@@ -267,7 +267,7 @@ traderControllerDashboard.updatePassword = ('/update-password', async (req, res)
 
     }
     else{
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid data`, entamarketToken: newToken}, true )
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid data, make sure password is 8 characters long`, entamarketToken: newToken}, true )
       return
     }
 

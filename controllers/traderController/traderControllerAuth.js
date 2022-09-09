@@ -214,7 +214,7 @@ traderControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
   let payload = JSON.parse(req.body)
   try{
     //check if data is valid
-    if(payload.newPassword.length >= 8 && utilities.validator(payload, ['email', 'newPassword']).isValid){
+    if(utilities.validator(payload, ['email', 'newPassword']).isValid){
       //remove all white spaces from user data if any
       payload = utilities.trimmer(payload)
       //hash pasword
