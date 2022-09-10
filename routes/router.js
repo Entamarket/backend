@@ -5,6 +5,7 @@ const traderControllerAuth = require('../controllers/traderController/traderCont
 const traderControllerDashboard = require('../controllers/traderController/traderControllerDashboard')
 const shopController = require('../controllers/shopController/shopController')
 const productController = require('../controllers/productController/productController')
+const buyerControllerAuth = require('../controllers/buyerController/buyerControllerAuth')
 const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads} = require('../lib/middleware')
 
 
@@ -23,7 +24,7 @@ router.put('/trader/dashboard/update-password', bodyParser, isJwtValid, decodeTo
 router.delete('/pending-trader/delete', isJwtValid, decodeToken, isTokenIdValid, traderControllerAuth.deletePendingTraderAccount)
 router.put('/trader/get-new-password', bodyParser, isJSON, traderControllerAuth.getNewPassword)
 
-
+router.post('/buyer/signup', bodyParser, isJSON, buyerControllerAuth.signup)
 
 router.post('/shop/create-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.createShop)
 router.put('/shop/update-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.updateShop)
