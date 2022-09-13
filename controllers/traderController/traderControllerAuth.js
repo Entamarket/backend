@@ -13,33 +13,33 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
   try{
     
     //parse incoming data
-    const parsedData = JSON.parse(req.body)
+    let payload = JSON.parse(req.body)
     
-    //check if parsed data is Valid
-    if(utilities.validator(parsedData, ['firstName', 'lastName', 'email', 'username', 'phoneNumber', 'password']).isValid){
+    //check if payload data is Valid
+    if(utilities.validator(payload, ['firstName', 'lastName', 'email', 'username', 'phoneNumber', 'password']).isValid){
       //remove all white spaces from user data if any
-      const trimmedData = utilities.trimmer(parsedData)
+      payload = utilities.trimmer(payload)
 
       //hash the password
-      trimmedData.password = utilities.dataHasher(trimmedData.password)
+      payload.password = utilities.dataHasher(payload.password)
 
       //check if username, email or phone number exists in database
       
-      const existingUser = await database.checkForExistingUser(trimmedData)
+      const existingUser = await database.checkForExistingUser(payload)
 
       if(existingUser.constructor.name == 'Object' && !existingUser.doesUserDetailExist){
 
         //store trimmed data in database(pendingTraders collection)
-        const pendingTrader = new Trader(trimmedData, true)
+        const pendingTrader = new Trader(payload, true)
 
         await pendingTrader.save()
 
         //send an email to the trader for verification of phone number
-        await email.send('entamarketltd@gmail.com', trimmedData.email, `hello ${trimmedData.firstName} ${trimmedData.lastName}, please verify your email with this OTP: ${trimmedData.otp}`, trimmedData.firstName)
+        await email.send('entamarketltd@gmail.com', payload.email, `hello ${payload.firstName} ${payload.lastName}, please verify your email with this OTP: ${payload.otp}`, payload.firstName)
 
         //Send JWT
         //fetch the user ID from the database
-        const pendingTraderObj = await database.findOne({username: trimmedData.username}, database.collection.pendingTraders, ["_id"], 1)
+        const pendingTraderObj = await database.findOne({username: payload.username}, database.collection.pendingTraders, ["_id"], 1)
         const token = utilities.jwt('sign', {userID: pendingTraderObj._id.toString(), tokenFor: "pendingTrader"})
 
         //send token to client
@@ -53,7 +53,7 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
        
     }
     else{
-      const errorObj = utilities.validator(parsedData, ['firstName', 'lastName', 'email', 'username', 'phoneNumber', 'password'])
+      const errorObj = utilities.validator(payload, ['firstName', 'lastName', 'email', 'username', 'phoneNumber', 'password'])
       errorObj.statusCode = 400
       utilities.setResponseData(res, 400, {'content-type': 'application/json'}, errorObj, true)
       return
@@ -76,12 +76,12 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
     const pendingTraderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.pendingTraders)
     
     //parse the data
-    const parsedData = JSON.parse(req.body)
+    const payload = JSON.parse(req.body)
 
     //check if OTP is in valid format
-    if(utilities.validator(parsedData, ["otp"]).isValid){
+    if(utilities.validator(payload, ["otp"]).isValid){
       //check if the OTP from the database matches the OTP from the client
-      if(pendingTraderObj.otp == parsedData.otp){
+      if(pendingTraderObj.otp == payload.otp){
         // transfer transfer pending trader from the pendingTrader collection to trader collection
         const {_id, createdAt, otp, ...rest} = pendingTraderObj
         const trader = new Trader(rest, false)
@@ -95,9 +95,7 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
         fs.mkdirSync(dir)
 
         //send a new token
-        const traderObj = await database.findOne({_id: savedTrader.insertedId}, database.collection.traders, ["_id"], 1)
-        traderObj._id = traderObj._id.toString()
-        const newToken = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
+        const newToken = utilities.jwt('sign', {userID: savedTrader.insertedId, tokenFor: "trader"})
             
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode:200, entamarketToken: newToken}, true )
   

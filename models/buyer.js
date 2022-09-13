@@ -21,7 +21,7 @@ class Buyer{
             return collection.insertOne(this.props)  
         }
         else{
-            
+            this.props.favouriteShops = []
             this.props.joinedAt = new Date().toLocaleString()
             const collection = db.collection(database.collection.buyers)
             return collection.insertOne(this.props)

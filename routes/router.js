@@ -24,7 +24,13 @@ router.put('/trader/dashboard/update-password', bodyParser, isJwtValid, decodeTo
 router.delete('/pending-trader/delete', isJwtValid, decodeToken, isTokenIdValid, traderControllerAuth.deletePendingTraderAccount)
 router.put('/trader/get-new-password', bodyParser, isJSON, traderControllerAuth.getNewPassword)
 
+
 router.post('/buyer/signup', bodyParser, isJSON, buyerControllerAuth.signup)
+router.put('/buyer/signup/account-verification', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerAuth.verifyOtp)
+router.get('/buyer/signup/resend-otp', isJwtValid, decodeToken, isTokenIdValid, buyerControllerAuth.resendOtp)
+router.put('/buyer/login', bodyParser, isJSON, buyerControllerAuth.login)
+router.put('/buyer/get-new-password', bodyParser, isJSON, buyerControllerAuth.getNewPassword)
+
 
 router.post('/shop/create-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.createShop)
 router.put('/shop/update-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.updateShop)
