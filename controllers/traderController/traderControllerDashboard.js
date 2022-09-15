@@ -154,6 +154,9 @@ traderControllerDashboard.updateEmail = ('/update-email', async (req, res)=>{
           //add create otp
           const newOtp = utilities.otpMaker()
 
+          //delete a userID if it exist in the pendingUsersUpdates
+          await database.deleteOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates)
+
           //add user to pendingUsersUpdates collection
           await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'email', value: payload.email}}, database.collection.pendingUsersUpdates)
         
@@ -204,6 +207,7 @@ traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, re
     if(utilities.validator(payload, ['otp']).isValid){
       //extrract data from the pendingUsersUpdates collection
       userObj = await database.findOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates, ['otp', 'dataToUpdate'], 1)
+ 
 
       //check if payload otp matches the otp in the userObj collection
       if(payload.otp === userObj.otp){
@@ -262,6 +266,9 @@ traderControllerDashboard.updatePassword = ('/update-password', async (req, res)
       if(payload.oldPassword === traderObj.password){
         //create new otp
         const newOtp = utilities.otpMaker()
+
+        //delete a userID if it exist in the pendingUsersUpdates
+        await database.deleteOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates)
 
         //insert the trader in the pendingUsersUpdates collection
         await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'password', value: payload.newPassword}}, database.collection.pendingUsersUpdates)

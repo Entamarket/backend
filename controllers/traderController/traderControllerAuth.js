@@ -224,6 +224,9 @@ traderControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
         //create new otp
         const newOtp = utilities.otpMaker()
 
+        //delete a userID if it exist in the pendingUsersUpdates
+        await database.deleteOne({userID: traderObj._id}, database.collection.pendingUsersUpdates)
+
         //insert trader in the pendingUsersUpdates collection
         await database.insertOne({userID: traderObj._id, createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'password', value: payload.newPassword}}, database.collection.pendingUsersUpdates)
 

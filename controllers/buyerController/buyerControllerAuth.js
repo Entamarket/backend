@@ -230,6 +230,9 @@ buyerControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
         //create new otp
         const newOtp = utilities.otpMaker()
 
+        //delete a userID if it exist in the pendingUsersUpdates
+        await database.deleteOne({userID: buyerObj._id}, database.collection.pendingUsersUpdates)
+
         //insert buyer in the pendingUsersUpdates collection
         await database.insertOne({userID: buyerObj._id, createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'password', value: payload.newPassword}}, database.collection.pendingUsersUpdates)
 
