@@ -67,7 +67,14 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
 
       //check if email, username and phone number of the payload are the same with the trader object, if they are the same, leave them like that but if they are different make sure that they are unique
       const errorArray = []
-      if(payload.username !== traderObj.username){
+      
+      if(errorArray.length < 1 && payload.phoneNumber !== traderObj.phoneNumber){
+        // check if this phone number is unique
+        const searchResult = await database.checkForExistingData(payload.phoneNumber, 'phoneNumber')
+        if(searchResult.doesUserDetailExist) errorArray.push(searchResult)
+      }
+
+      if(errorArray.length < 1 && payload.username !== traderObj.username){
         // check if this username is unique
         const searchResult = await database.checkForExistingData(payload.username, 'username')
         if(!(searchResult.doesUserDetailExist)){
@@ -93,11 +100,6 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
         }
       }
 
-      if(errorArray.length < 1 && payload.phoneNumber !== traderObj.phoneNumber){
-        // check if this phone number is unique
-        const searchResult = await database.checkForExistingData(payload.phoneNumber, 'phoneNumber')
-        if(searchResult.doesUserDetailExist) errorArray.push(searchResult)
-      }
       
       if(errorArray.length < 1){
         //update the trader profile
@@ -108,7 +110,7 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
 
       }
       else{
-        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This ${errorArray[0].userDetail}`, entamarketToken: newToken}, true )
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This ${errorArray[0].userDetail} already exists`, entamarketToken: newToken}, true )
         return
       }
     }
@@ -208,10 +210,9 @@ traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, re
       //extrract data from the pendingUsersUpdates collection
       userObj = await database.findOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates, ['otp', 'dataToUpdate'], 1)
  
-
       //check if payload otp matches the otp in the userObj collection
       if(payload.otp === userObj.otp){
-        //update the email of the trader
+        //update the data of the trader
         await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
 
         //delete user from pendingUsersUpdates collection

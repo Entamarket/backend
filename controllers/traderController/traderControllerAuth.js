@@ -32,15 +32,14 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
         //store trimmed data in database(pendingTraders collection)
         const pendingTrader = new Trader(payload, true)
 
-        await pendingTrader.save()
+        const savedPendingTraderObj = await pendingTrader.save()
 
         //send an email to the trader for verification of phone number
         await email.send('entamarketltd@gmail.com', payload.email, `hello ${payload.firstName} ${payload.lastName}, please verify your email with this OTP: ${payload.otp}`, payload.firstName)
 
         //Send JWT
         //fetch the user ID from the database
-        const pendingTraderObj = await database.findOne({username: payload.username}, database.collection.pendingTraders, ["_id"], 1)
-        const token = utilities.jwt('sign', {userID: pendingTraderObj._id.toString(), tokenFor: "pendingTrader"})
+        const token = utilities.jwt('sign', {userID: savedPendingTraderObj.insertedId.toString(), tokenFor: "pendingTrader"})
 
         //send token to client
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: token}, true)

@@ -6,6 +6,7 @@ const traderControllerDashboard = require('../controllers/traderController/trade
 const shopController = require('../controllers/shopController/shopController')
 const productController = require('../controllers/productController/productController')
 const buyerControllerAuth = require('../controllers/buyerController/buyerControllerAuth')
+const buyerControllerDashboard = require('../controllers/buyerController/buyerControllerDashboard')
 const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads} = require('../lib/middleware')
 
 
@@ -30,7 +31,12 @@ router.put('/buyer/signup/account-verification', bodyParser, isJwtValid, decodeT
 router.get('/buyer/signup/resend-otp', isJwtValid, decodeToken, isTokenIdValid, buyerControllerAuth.resendOtp)
 router.put('/buyer/login', bodyParser, isJSON, buyerControllerAuth.login)
 router.put('/buyer/get-new-password', bodyParser, isJSON, buyerControllerAuth.getNewPassword)
-
+router.get('/buyer/dashboard', isJwtValid, decodeToken, isTokenIdValid, buyerControllerDashboard.home)
+router.put('/buyer/dashboard/update-profile', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.updateProfile)
+router.put('/buyer/dashboard/update-email', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.updateEmail)
+router.put('/buyer/dashboard/update-password', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.updatePassword)
+router.put('/buyer/dashboard/verify-update-otp', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.verifyUpdateOtp)
+router.delete('/buyer/dashboard/delete-account', isJwtValid, decodeToken, isTokenIdValid, buyerControllerDashboard.deleteAccount)
 
 router.post('/shop/create-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.createShop)
 router.put('/shop/update-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.updateShop)
