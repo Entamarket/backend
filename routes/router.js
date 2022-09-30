@@ -7,6 +7,7 @@ const shopController = require('../controllers/shopController/shopController')
 const productController = require('../controllers/productController/productController')
 const buyerControllerAuth = require('../controllers/buyerController/buyerControllerAuth')
 const buyerControllerDashboard = require('../controllers/buyerController/buyerControllerDashboard')
+const appController = require('../controllers/appController/appController')
 const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads} = require('../lib/middleware')
 
 
@@ -48,5 +49,6 @@ router.post('/product/add-product', isJwtValid, decodeToken, isTokenIdValid, upl
 router.put('/product/update-product', isJwtValid, decodeToken, isTokenIdValid, updateUploads, productController.updateProduct)
 router.delete('/product/delete-product', isJwtValid, decodeToken, isTokenIdValid, productController.deleteProduct)
 
+router.get('/search', appController.search)
 
 module.exports = router

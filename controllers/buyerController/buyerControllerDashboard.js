@@ -25,9 +25,9 @@ buyerControllerDashboard.home = ('/dashboard', async (req, res)=>{
 
     buyerObj = buyerObj[0]
     if(buyerObj){
-        buyerObj._id = buyerObj._id.toString()
+      buyerObj._id = buyerObj._id.toString()
 
-        //send token and buyer data
+      //send token and buyer data
       utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, buyerData: buyerObj, entamarketToken: newToken}, true )
     }
     else{
