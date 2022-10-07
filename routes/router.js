@@ -52,6 +52,8 @@ router.delete('/product/delete-product', isJwtValid, decodeToken, isTokenIdValid
 
 
 router.post('/comment/add-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.addComment)
+router.put('/comment/update-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.updateComment)
+router.delete('/comment/delete-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.deleteComment)
 
 
 router.get('/search', appController.search)
