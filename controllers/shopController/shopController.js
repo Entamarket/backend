@@ -22,7 +22,7 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
             //add shop owner details to payload
             payload.owner = ObjectId(decodedToken.userID)
             const ownerObj = await database.findOne({_id: payload.owner}, database.collection.traders, ['username'], 1)
-
+            
             // Add the shop username
             payload.username = payload.name.replace(/\s/g, "_") + "/" + ownerObj.username
 

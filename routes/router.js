@@ -8,7 +8,8 @@ const productController = require('../controllers/productController/productContr
 const buyerControllerAuth = require('../controllers/buyerController/buyerControllerAuth')
 const buyerControllerDashboard = require('../controllers/buyerController/buyerControllerDashboard')
 const appController = require('../controllers/appController/appController')
-const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads} = require('../lib/middleware')
+const commentController = require('../controllers/commentController/commentController')
+const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader} = require('../lib/middleware')
 
 
 router.use('/multimedia/traders', multimedia)
@@ -39,7 +40,7 @@ router.put('/buyer/dashboard/update-password', bodyParser, isJwtValid, decodeTok
 router.put('/buyer/dashboard/verify-update-otp', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.verifyUpdateOtp)
 router.delete('/buyer/dashboard/delete-account', isJwtValid, decodeToken, isTokenIdValid, buyerControllerDashboard.deleteAccount)
 
-router.post('/shop/create-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.createShop)
+router.post('/shop/create-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, isTrader, shopController.createShop)
 router.put('/shop/update-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.updateShop)
 router.delete('/shop/delete-shop', isJwtValid, decodeToken, isTokenIdValid, shopController.deleteShop)
 router.get('/shop/get-shop', isJwtValid, decodeToken, isTokenIdValid, shopController.getShop)
@@ -48,6 +49,10 @@ router.get('/shop/get-shop', isJwtValid, decodeToken, isTokenIdValid, shopContro
 router.post('/product/add-product', isJwtValid, decodeToken, isTokenIdValid, uploads, productController.addProduct)
 router.put('/product/update-product', isJwtValid, decodeToken, isTokenIdValid, updateUploads, productController.updateProduct)
 router.delete('/product/delete-product', isJwtValid, decodeToken, isTokenIdValid, productController.deleteProduct)
+
+
+router.post('/comment/add-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.addComment)
+
 
 router.get('/search', appController.search)
 

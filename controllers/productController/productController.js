@@ -14,9 +14,6 @@ productController.addProduct = ('/add-product', async (req, res)=>{
     try{
         //check if the data is valid
         if(utilities.validator(req.body, ['name', 'price', 'description', 'stock']).isValid){
-            //check if the trader owns the shop
-            const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops, ['owner'], 1)
-            
             
             //add an array of image paths to the body of the product
             const imagePaths = []
