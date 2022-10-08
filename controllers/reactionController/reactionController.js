@@ -126,7 +126,7 @@ reactionController.deleteReaction = ('/delete-reaction', async (req, res)=>{
             await database.deleteOne({_id: reactionID},  database.collection.reactions)
 
             //remove reaction from reaction array in product
-            await database.db.collection(database.collection.products).updateOne({_id: commentObj.productID}, {$pull: {reactions: reactionID}})
+            await database.db.collection(database.collection.products).updateOne({_id: reactionObj.productID}, {$pull: {reactions: reactionID}})
 
             //send new token
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: 'success', entamarketToken: newToken}, true)
@@ -134,7 +134,7 @@ reactionController.deleteReaction = ('/delete-reaction', async (req, res)=>{
         }
         else{
             //send new token
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't own this comment`, entamarketToken: newToken}, true)  
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This user doesn't own this reaction`, entamarketToken: newToken}, true)  
         }
       
     }

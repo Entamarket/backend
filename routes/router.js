@@ -59,7 +59,7 @@ router.delete('/comment/delete-comment', bodyParser, isJwtValid, decodeToken, is
 
 router.post('/reaction/add-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, reactionController.addReaction)
 router.put('/reaction/update-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, reactionController.updateReaction)
-router.delete('/comment/delete-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.deleteReaction)
+router.delete('/reaction/delete-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, reactionController.deleteReaction)
 
 
 router.get('/search', appController.search)
