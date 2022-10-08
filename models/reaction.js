@@ -6,12 +6,10 @@ class Reaction{
         this.props = props
     }
     save = ()=>{
-        this.props.productsSold = 0
-        this.props.followers = []
-        this.props. products = []
-        this.props.openedAt = new Date().toLocaleString()
+        
+        this.props.reactedAt = new Date().toLocaleString()
 
-        return database.insertOne(this.props, database.collection.reaction)
+        return database.insertOne(this.props, database.collection.reactions)
     }
 }
 

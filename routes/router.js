@@ -9,6 +9,7 @@ const buyerControllerAuth = require('../controllers/buyerController/buyerControl
 const buyerControllerDashboard = require('../controllers/buyerController/buyerControllerDashboard')
 const appController = require('../controllers/appController/appController')
 const commentController = require('../controllers/commentController/commentController')
+const reactionController = require('../controllers/reactionController/reactionController')
 const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader} = require('../lib/middleware')
 
 
@@ -54,6 +55,11 @@ router.delete('/product/delete-product', isJwtValid, decodeToken, isTokenIdValid
 router.post('/comment/add-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.addComment)
 router.put('/comment/update-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.updateComment)
 router.delete('/comment/delete-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.deleteComment)
+
+
+router.post('/reaction/add-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, reactionController.addReaction)
+router.put('/reaction/update-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, reactionController.updateReaction)
+router.delete('/comment/delete-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.deleteReaction)
 
 
 router.get('/search', appController.search)
