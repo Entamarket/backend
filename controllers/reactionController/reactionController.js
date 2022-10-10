@@ -119,7 +119,7 @@ reactionController.deleteReaction = ('/delete-reaction', async (req, res)=>{
 
         //check if the user owns the reaction
         const reactionObj = await database.findOne({_id: reactionID}, database.collection.reactions, ['_id', 'productID', 'owner'], 1)
-        console.log(reactionObj)
+        
         if(reactionObj?.owner.toString() === decodedToken.userID){
 
             // delete reaction
