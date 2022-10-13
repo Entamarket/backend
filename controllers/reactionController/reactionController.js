@@ -11,6 +11,7 @@ reactionController.addReaction = ('/add-reaction', async (req, res)=>{
     const decodedToken = req.decodedToken
     const newToken =  utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
     try{
+        
         //extract payload
         const payload = JSON.parse(req.body)
         //check if the data is valid
@@ -26,18 +27,42 @@ reactionController.addReaction = ('/add-reaction', async (req, res)=>{
             const productObj = await database.findOne({_id: payload.productID}, database.collection.products, ['_id'], 1)
 
             if(productObj){
-                //store the comment
-                const savedReaction = await new Reaction(payload).save()
+                // check if the user has reacted before
+                let hasUserReacted = await database.findOne({$and: [{productID: payload.productID}, {owner: payload.owner}]}, database.collection.reactions, ['_id'], 1)
+                if(!hasUserReacted){
+                    //store the comment
+                    const savedReaction = await new Reaction(payload).save()
 
-                // update product reaction array
-                await database.db.collection(database.collection.products).updateOne({_id: payload.productID}, {$addToSet: {reactions: savedReaction.insertedId}})
+                    // update product reaction array
+                    await database.db.collection(database.collection.products).updateOne({_id: payload.productID}, {$addToSet: {reactions: savedReaction.insertedId}})
 
-                //get reaction data
-                const reactionObj = await database.findOne({_id: savedReaction.insertedId}, database.collection.reactions)
+                    //get reaction data
 
-                //send new token
-                utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, commentData: reactionObj, entamarketToken: newToken}, true)
+                    let reactionObj = await database.db.collection(database.collection.reactions).aggregate([
+                        {$match: {_id: savedReaction.insertedId}}, 
+                        {$lookup: {from: decodedToken.tokenFor +'s', localField: "owner", foreignField: "_id", as: "owner"}}
+                    ]).toArray()
+
+                    reactionObj = reactionObj[0]
+                    reactionObj.owner = reactionObj.owner[0]
+                    const owner = {}
+                    for(data in reactionObj.owner){
+                        if(data === '_id'|| data === 'firstName' || data === 'lastName' || data === 'username')
+                        owner[data] = reactionObj.owner[data] 
+                    }
+
+                    reactionObj.owner = owner
+
+                    //send new token
+                    utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, reactionData: reactionObj, entamarketToken: newToken}, true)
     
+
+                }
+                else{
+                    //send new token
+                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `You can only react once`, entamarketToken: newToken}, true)
+                }
+                
             }
             else{
                 //send new token
@@ -81,7 +106,20 @@ reactionController.updateReaction = ('/update-reaction', async (req, res)=>{
                 // update reaction
                 await database.updateOne({_id: reactionID}, database.collection.reactions, payload)
 
-                const updatedReactionObj = await database.findOne({_id: reactionID}, database.collection.reactions)
+                let  updatedReactionObj = await database.db.collection(database.collection.reactions).aggregate([
+                    {$match: {_id: reactionID}}, 
+                    {$lookup: {from: decodedToken.tokenFor +'s', localField: "owner", foreignField: "_id", as: "owner"}}
+                ]).toArray()
+
+                updatedReactionObj = updatedReactionObj[0]
+                updatedReactionObj.owner = updatedReactionObj.owner[0]
+                const owner = {}
+                for(data in updatedReactionObj.owner){
+                    if(data === '_id'|| data === 'firstName' || data === 'lastName' || data === 'username')
+                    owner[data] = updatedReactionObj.owner[data] 
+                }
+
+                updatedReactionObj.owner = owner
 
                 //send new token
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, reactionData: updatedReactionObj, entamarketToken: newToken}, true)

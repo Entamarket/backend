@@ -33,7 +33,21 @@ commentController.addComment = ('/add-comment', async (req, res)=>{
                 await database.db.collection(database.collection.products).updateOne({_id: payload.productID}, {$addToSet: {comments: savedComment.insertedId}})
 
                 //get comment data
-                const commentObj = await database.findOne({_id: savedComment.insertedId}, database.collection.comments)
+                let commentObj = await database.db.collection(database.collection.comments).aggregate([
+                    {$match: {_id: savedComment.insertedId}}, 
+                    {$lookup: {from: decodedToken.tokenFor +'s', localField: "owner", foreignField: "_id", as: "owner"}}
+                ]).toArray()
+
+                commentObj = commentObj[0]
+                commentObj.owner = commentObj.owner[0]
+                const owner = {}
+                for(data in commentObj.owner){
+                    if(data === '_id'|| data === 'firstName' || data === 'lastName' || data === 'username')
+                    owner[data] = commentObj.owner[data] 
+                }
+
+                commentObj.owner = owner
+               // const commentObj = await database.findOne({_id: savedComment.insertedId}, database.collection.comments)
 
                 //send new token
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, commentData: commentObj, entamarketToken: newToken}, true)
@@ -81,7 +95,22 @@ commentController.updateComment = ('/update-comment', async (req, res)=>{
                 // update comment
                 await database.updateOne({_id: commentID}, database.collection.comments, payload)
 
-                const updatedCommentObj = await database.findOne({_id: commentID}, database.collection.comments)
+                let  updatedCommentObj = await database.db.collection(database.collection.comments).aggregate([
+                    {$match: {_id: commentID}}, 
+                    {$lookup: {from: decodedToken.tokenFor +'s', localField: "owner", foreignField: "_id", as: "owner"}}
+                ]).toArray()
+
+                updatedCommentObj = updatedCommentObj[0]
+                updatedCommentObj.owner = updatedCommentObj.owner[0]
+                const owner = {}
+                for(data in updatedCommentObj.owner){
+                    if(data === '_id'|| data === 'firstName' || data === 'lastName' || data === 'username')
+                    owner[data] = updatedCommentObj.owner[data] 
+                }
+
+                updatedCommentObj.owner = owner
+
+                //const updatedCommentObj = await database.findOne({_id: commentID}, database.collection.comments)
 
                 //send new token
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, commentData: updatedCommentObj, entamarketToken: newToken}, true)
