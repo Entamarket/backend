@@ -237,4 +237,100 @@ shopController.getShop = ('/get-shop', async (req, res)=>{
     }
 })
 
+
+
+shopController.addToFavouriteShops = ('/add-to-favourite-shops', async (req, res)=>{
+
+    //Extract decoded token
+    const decodedToken = req.decodedToken
+
+    //create newToken
+    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
+
+    //Extract payload from body
+    const payload = JSON.parse(req.body)
+    const shopID = payload.shopID
+           
+    try{
+        //Check if data in body is valid
+        if(utilities.validator(payload, ["shopID"]).isValid){
+
+            //check if shop exists
+            const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops, ['_id', 'name', 'username'], 1)
+
+            if(shopObj){
+                //add shop to favourite shop array of user
+                await database.db.collection(decodedToken.tokenFor + 's').updateOne({_id: ObjectId(decodedToken.userID)}, {$addToSet: {favouriteShops: ObjectId(shopID)}})
+                
+                //send token
+                utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, shopData: shopObj, entamarketToken: newToken}, true)
+            }
+            else{
+                
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `this shop doesn't exist`, entamarketToken: newToken}, true )
+                return
+            }  
+        }
+        else{
+            // send token
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid data, all data should be in string format', entamarketToken: newToken}, true )
+            return
+        }
+    }
+    catch(err){
+        console.log(err) 
+        //send newToken
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        return
+    }
+
+})
+
+
+shopController.removeFromFavouriteShops = ('/remove-from-favourite-shops', async (req, res)=>{
+
+    //Extract decoded token
+    const decodedToken = req.decodedToken
+
+    //create newToken
+    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
+
+    //Extract shopID from query-param
+    const shopID = req.query.shopID
+           
+    try{
+        //Check if data in body is valid
+        if(utilities.validator({shopID: shopID}, ["shopID"]).isValid){
+
+            //check if shop exists
+            const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops, ['_id'], 1)
+
+            if(shopObj){
+                //remove shop from favourite shop array of user
+                await database.db.collection(decodedToken.tokenFor + 's').updateOne({_id: ObjectId(decodedToken.userID)}, {$pull: {favouriteShops: ObjectId(shopID)}})
+
+                //send token
+                utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: 'sucess', entamarketToken: newToken}, true)
+            }
+            else{
+                
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `this shop doesn't exist`, entamarketToken: newToken}, true )
+                return
+            }  
+        }
+        else{
+            // send token
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid data, all data should be in string format', entamarketToken: newToken}, true )
+            return
+        }
+    }
+    catch(err){
+        console.log(err) 
+        //send newToken
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        return
+    }
+
+})
+
 module.exports = shopController
