@@ -5,6 +5,7 @@ const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const Buyer = require('../../models/buyer')
 const email = require('../../lib/email')
+const Cart = require('../../models/cart')
 
 
 const buyerControllerAuth = {}
@@ -99,6 +100,10 @@ buyerControllerAuth.verifyOtp = ('/signup/account-verification', async (req, res
         //Create folder in multimedia
         const dir = [__dirname, '..', '..', 'multimedia', 'buyers', savedBuyer.insertedId].join(path.sep)
         fs.mkdirSync(dir)
+
+        //create cart
+        const cart = new Cart({owner: savedBuyer.insertedId, products: []})
+        await cart.save() 
 
         //send a new token
         const newToken = utilities.jwt('sign', {userID: savedBuyer.insertedId, tokenFor: "buyer"})

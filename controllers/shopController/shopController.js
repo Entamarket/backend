@@ -3,8 +3,9 @@ const fs = require('fs')
 const path = require('path')
 const database = require('../../lib/database')
 const utilities = require('../../lib/utilities')
-const shopController = {}
 const Shop = require('../../models/shop')
+
+const shopController = {}
 
 shopController.createShop = ('/create-shop', async (req, res)=>{
     //Extract decoded token

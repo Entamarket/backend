@@ -11,6 +11,7 @@ const appController = require('../controllers/appController/appController')
 const commentController = require('../controllers/commentController/commentController')
 const reactionController = require('../controllers/reactionController/reactionController')
 const homePageController = require('../controllers/homePageController/homePageController')
+const cartController = require('../controllers/cartController/cartController')
 const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader} = require('../lib/middleware')
 
 
@@ -66,6 +67,9 @@ router.delete('/reaction/delete-reaction', bodyParser, isJwtValid, decodeToken, 
 
 
 router.get('/home-page', homePageController.home)
+
+router.put('/cart/update-cart', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, cartController.updateCart)
+router.get('/cart/get-cart', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, cartController.getCart)
 
 router.get('/search', appController.search)
 
