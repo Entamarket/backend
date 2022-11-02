@@ -22,9 +22,13 @@ productController.addProduct = ('/add-product', async (req, res)=>{
                 imagePaths.push(`https://entamarket-api.herokuapp.com/` + image.path)
             }
 
+            // get shop category
+            const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops, ['category'], 1)
+            
             req.body.images = imagePaths
             req.body.owner = ObjectId(decodedToken.userID)
             req.body.shopID = ObjectId(shopID)
+            req.body.category = shopObj.category
 
             //store the product
             const savedProduct = await new Product(req.body).save()
@@ -142,6 +146,28 @@ productController.deleteProduct = ('/delete-product', async (req, res)=>{
         //send new Token   
         utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
     }
+})
+
+productController.getProduct = ('/get-product', async (req, res)=>{
+    const productID = req.query.productID
+    try{
+        //check if product exists
+        const productObj = await database.findOne({_id: ObjectId(productID)}, database.collection.products)
+
+        if(productObj){
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, productData: productObj}, true)
+
+        }
+        else{
+            utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 400, msg: "this product id does not exist"}, true) 
+        }
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+    }
+    
 })
 
 module.exports = productController;

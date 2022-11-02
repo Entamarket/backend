@@ -49,12 +49,12 @@ router.delete('/shop/delete-shop', isJwtValid, decodeToken, isTokenIdValid, shop
 router.get('/shop/get-shop', isJwtValid, decodeToken, isTokenIdValid, shopController.getShop)
 router.put('/shop/add-to-favourite-shops', bodyParser, isJwtValid, decodeToken, isTokenIdValid, shopController.addToFavouriteShops)
 router.delete('/shop/remove-from-favourite-shops', isJwtValid, decodeToken, isTokenIdValid, shopController.removeFromFavouriteShops)
-
+router.get('/shop/get-shop-unauth', shopController.getShopUnauth)
 
 router.post('/product/add-product', isJwtValid, decodeToken, isTokenIdValid, uploads, productController.addProduct)
 router.put('/product/update-product', isJwtValid, decodeToken, isTokenIdValid, updateUploads, productController.updateProduct)
 router.delete('/product/delete-product', isJwtValid, decodeToken, isTokenIdValid, productController.deleteProduct)
-
+router.get('/product/get-product', productController.getProduct)
 
 router.post('/comment/add-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.addComment)
 router.put('/comment/update-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.updateComment)

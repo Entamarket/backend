@@ -334,4 +334,26 @@ shopController.removeFromFavouriteShops = ('/remove-from-favourite-shops', async
 
 })
 
+shopController.getShopUnauth = ('/get-shop-unauth', async (req, res)=>{
+    const shopID = req.query.shopID
+    try{
+        //check if product exists
+        const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops)
+
+        if(shopObj){
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, shopData: shopObj}, true)
+
+        }
+        else{
+            utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 400, msg: "this product id does not exist"}, true) 
+        }
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+    }
+    
+})
+
 module.exports = shopController
