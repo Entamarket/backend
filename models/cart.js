@@ -8,7 +8,7 @@ class Cart{
     save = ()=>{
         this.props.postedAt = new Date().toLocaleString()
 
-        return database.insertOne(this.props, database.collection.comments)
+        return database.insertOne(this.props, database.collection.carts)
     }
 }
 
