@@ -69,7 +69,7 @@ router.delete('/reaction/delete-reaction', bodyParser, isJwtValid, decodeToken, 
 router.get('/home-page', homePageController.home)
 
 router.put('/cart/update-cart', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, cartController.updateCart)
-router.get('/cart/get-cart', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, cartController.getCart)
+router.get('/cart/get-cart', bodyParser, isJwtValid, decodeToken, isTokenIdValid, cartController.getCart)
 
 router.get('/search', appController.search)
 
