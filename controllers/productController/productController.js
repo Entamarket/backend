@@ -19,7 +19,7 @@ productController.addProduct = ('/add-product', async (req, res)=>{
             const imagePaths = []
             for(let image of req.files){
                 image.path = image.path.split('\\').join('/')
-                imagePaths.push(`https://entamarket-api.herokuapp.com/` + image.path)
+                imagePaths.push(`https://www.entamarket-api.com/` + image.path)
             }
 
             // get shop category

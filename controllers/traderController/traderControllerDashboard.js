@@ -23,11 +23,21 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
 
     traderObj = traderObj[0]
     if(traderObj){
-      traderObj._id = traderObj._id.toString()
+      //traderObj._id = traderObj._id.toString()
       traderObj.accountBalance = traderObj.accountBalance.toString()
+
+      //get notifications
+
+      const notifications = await database.db.collection(database.collection.notifications).aggregate([
+        {$match: {to: traderObj._id}}, 
+        {$limit: 5},
+        {$sort: {_id: -1}}
+      ]).toArray()
+
+      traderObj.notifications = notifications
   
       //Get new token and send
-      const newToken =  utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
+      const newToken =  utilities.jwt('sign', {userID: traderObj._id.toString(), tokenFor: "trader"})
       utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, traderData: traderObj, entamarketToken: newToken}, true )
     }
     else{

@@ -2,6 +2,7 @@ const {ObjectId}  = require('mongodb')
 const database = require('../../lib/database')
 const utilities = require('../../lib/utilities')
 const Comment = require('../../models/comment')
+const Notification = require('../../models/notification')
 
 
 const commentController = {}
@@ -23,7 +24,7 @@ commentController.addComment = ('/add-comment', async (req, res)=>{
             payload.owner = ObjectId(decodedToken.userID)
 
             //check if product exists
-            const productObj = await database.findOne({_id: payload.productID}, database.collection.products, ['_id'], 1)
+            const productObj = await database.findOne({_id: payload.productID}, database.collection.products, ['_id', 'owner'], 1)
 
             if(productObj){
                 //store the comment
@@ -47,7 +48,17 @@ commentController.addComment = ('/add-comment', async (req, res)=>{
                 }
 
                 commentObj.owner = owner
-               // const commentObj = await database.findOne({_id: savedComment.insertedId}, database.collection.comments)
+
+               // send notification to trader
+               const notificationObj = {...commentObj}
+               delete notificationObj.postedAt //removed the addedAt property because there is already a notifiedOn property for the notification
+               notificationObj.type = 'comment'
+               notificationObj.to = productObj.owner
+               notificationObj.from = commentObj.owner._id
+               delete notificationObj.owner //remove comment owner object
+
+               await new Notification(notificationObj).save()
+        
 
                 //send new token
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, commentData: commentObj, entamarketToken: newToken}, true)
