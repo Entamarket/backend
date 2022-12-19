@@ -90,8 +90,8 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
         await database.deleteOne({_id: pendingTraderObj._id}, database.collection.pendingTraders)
 
         //Create folder in multimedia
-       // const dir = [__dirname, '..', '..', 'multimedia', 'traders', savedTrader.insertedId].join(path.sep)
-        //fs.mkdirSync(dir)
+        const dir = [__dirname, '..', '..', 'multimedia', 'traders', savedTrader.insertedId].join(path.sep) 
+        fs.mkdirSync(dir)
 
         //send a new token
         const newToken = utilities.jwt('sign', {userID: savedTrader.insertedId, tokenFor: "trader"})
