@@ -18,8 +18,7 @@ productController.addProduct = ('/add-product', async (req, res)=>{
             //add an array of image paths to the body of the product
             const imagePaths = []
             for(let image of req.files){
-                image.path = image.path.split('\\').join('/')
-                imagePaths.push(`https://www.entamarket-api.com/` + image.path)
+                imagePaths.push(`https://www.entamarket-api.com` + image.path)
             }
 
             // get shop category
@@ -77,16 +76,18 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
                 //add an array of image paths to the body of the product
                 const imagePaths = []
                 for(let image of req.files){
-                    imagePaths.push(image.path)
+                    imagePaths.push(`https://www.entamarket-api.com/` + image.path)
                 }
 
                 req.body.images = imagePaths
             }
             //update product
             await database.updateOne({_id: ObjectId(req.query.productID)}, database.collection.products, req.body)
+            //get updated product
+            const updatedProduct = await database.findOne({_id: ObjectId(req.query.productID)}, database.collection.products)
 
             //send new token
-            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true)
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, updatedProductData: updatedProduct, entamarketToken: newToken}, true)
 
         }
         else{
@@ -126,6 +127,7 @@ productController.deleteProduct = ('/delete-product', async (req, res)=>{
 
             //remove product images from server
             for(let image of productObj.images){
+                image = image.replace('https://www.entamarket-api.com/', '')
                 await fs.promises.unlink(path.join(__dirname, '..', '..', image))
             }
 
