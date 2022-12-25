@@ -18,7 +18,7 @@ productController.addProduct = ('/add-product', async (req, res)=>{
             //add an array of image paths to the body of the product
             const imagePaths = []
             for(let image of req.files){
-                imagePaths.push(`https://www.entamarket-api.com` + image.path)
+                imagePaths.push(`https://www.entamarket-api.com/` + image.path)
             }
 
             // get shop category
