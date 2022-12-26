@@ -39,7 +39,7 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
                  
 
                 //create shop directory
-                fs.mkdirSync(path.join(__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID, `shops-${newShopID}`))
+                fs.mkdirSync(path.join(__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID, `shop-${newShopID}`))
 
                 //get shop object
                 const shopObj = await database.findOne({_id: savedShop.insertedId}, database.collection.shops)
