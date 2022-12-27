@@ -2,7 +2,7 @@ const {ObjectId}  = require('mongodb')
 const database = require('../../lib/database')
 const utilities = require('../../lib/utilities')
 const Comment = require('../../models/comment')
-const Notification = require('../../models/notification')
+const {send} = require("../notificationController/notificationController")
 
 
 const commentController = {}
@@ -50,16 +50,8 @@ commentController.addComment = ('/add-comment', async (req, res)=>{
                 commentObj.owner = owner
 
                // send notification to trader
-               const notificationObj = {...commentObj}
-               delete notificationObj.postedAt //removed the addedAt property because there is already a notifiedOn property for the notification
-               notificationObj.type = 'comment'
-               notificationObj.to = productObj.owner
-               notificationObj.from = commentObj.owner._id
-               delete notificationObj.owner //remove comment owner object
-
-               await new Notification(notificationObj).save()
-        
-
+               await send("comment", {...commentObj}, commentObj.owner._id, productObj.owner)
+                
                 //send new token
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, commentData: commentObj, entamarketToken: newToken}, true)
     
