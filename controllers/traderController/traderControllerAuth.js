@@ -182,7 +182,7 @@ traderControllerAuth.login = ('/login', async (req, res)=>{
         if(trimmedLoginData.password === traderObj.password){
           //create a token and send
           const token = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
-          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, text: "hello", entamarketToken: token}, true )
+          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: token}, true )
         }
         else{
           utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'Invalid user ID or password'}, true )
