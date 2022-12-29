@@ -14,8 +14,6 @@ cartController.updateCart = ('/update-cart', async (req, res)=>{
 
     //Extract payload from body
     const payload = JSON.parse(req.body)
-    console.log(payload)
-    console.log(payload.product)
            
     try{
         //Check if product exists in database
