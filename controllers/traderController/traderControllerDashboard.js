@@ -5,6 +5,7 @@ const {ObjectId}  = require('mongodb')
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const email = require('../../lib/email')
+const notification = require("../notificationController/notificationController")
 
 const traderControllerDashboard = {}
 
@@ -27,12 +28,7 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
       traderObj.accountBalance = traderObj.accountBalance.toString()
 
       //get notifications
-
-      const notifications = await database.db.collection(database.collection.notifications).aggregate([
-        {$match: {to: traderObj._id}}, 
-        {$limit: 5},
-        {$sort: {_id: -1}}
-      ]).toArray()
+      const notifications = await notification.get(traderObj._id)
 
       traderObj.notifications = notifications
   

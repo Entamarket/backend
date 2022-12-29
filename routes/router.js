@@ -13,7 +13,7 @@ const reactionController = require('../controllers/reactionController/reactionCo
 const homePageController = require('../controllers/homePageController/homePageController')
 const cartController = require('../controllers/cartController/cartController')
 const notificationController = require("../controllers/notificationController/notificationController")
-const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader} = require('../lib/middleware')
+const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader} = require('../lib/middleware')
 
 
 router.use('/multimedia/traders', multimedia)
@@ -65,9 +65,9 @@ router.put('/reaction/update-reaction', bodyParser, isJwtValid, decodeToken, isT
 
 router.get('/home-page', homePageController.home)
 
-router.put('/cart/update-cart', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, cartController.updateCart)
-router.get('/cart/get-cart', bodyParser, isJwtValid, decodeToken, isTokenIdValid, cartController.getCart)
-router.delete('/cart/delete-cart-item', isJwtValid, decodeToken, isTokenIdValid, cartController.deleteCart)
+router.put('/cart/update-cart', bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, cartController.updateCart)
+router.get('/cart/get-cart', bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, cartController.getCart)
+router.delete('/cart/delete-cart-item', isJwtValidNB, decodeToken, isTokenIdValid, cartController.deleteCart)
 
 router.get('/search', appController.search)
 

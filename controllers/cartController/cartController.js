@@ -33,20 +33,23 @@ cartController.updateCart = ('/update-cart', async (req, res)=>{
                 cartObj = cartObj[0]
 
                 //send response and token
-                utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj, entamarketToken: newToken}, true )
+                //utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj, entamarketToken: newToken}, true )
+                utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj}, true )
                 return
 
             }
             else{
                 // send token
-                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This product already exists in cart', entamarketToken: newToken}, true )
+                //utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This product already exists in cart', entamarketToken: newToken}, true )
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This product already exists in cart'}, true )
                 return
             }
 
         }
         else{
             // send token
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This product does not exist', entamarketToken: newToken}, true )
+           // utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This product does not exist', entamarketToken: newToken}, true )
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This product does not exist'}, true )
             return
         }
         
@@ -54,7 +57,8 @@ cartController.updateCart = ('/update-cart', async (req, res)=>{
     catch(err){
         console.log(err) 
         //send newToken
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        //utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
         return
     }
 
@@ -66,7 +70,7 @@ cartController.getCart = ('/get-cart', async (req, res)=>{
     //Extract decoded token
     const decodedToken = req.decodedToken
     //create newToken
-    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
+    //const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
        
     try{  
         //get cart object
@@ -78,14 +82,16 @@ cartController.getCart = ('/get-cart', async (req, res)=>{
         cartObj = cartObj[0]
 
         // send token
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj, entamarketToken: newToken}, true )
+        //utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj, entamarketToken: newToken}, true )
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj}, true )
         return
         
     }
     catch(err){
         console.log(err) 
         //send newToken
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        //utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
         return
     }
 
@@ -95,7 +101,7 @@ cartController.deleteCart = ('/delete-cart-item', async (req, res)=>{
     //Extract decoded token
     const decodedToken = req.decodedToken
     //create newToken
-    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
+    //const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
     //extract payload
     const productID = ObjectId(req.query.productID)
 
@@ -112,14 +118,16 @@ cartController.deleteCart = ('/delete-cart-item', async (req, res)=>{
         cartObj = cartObj[0]
 
         // send token
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj, entamarketToken: newToken}, true )
+        //utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj, entamarketToken: newToken}, true )
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj}, true )
         return
 
     }
     catch(err){
         console.log(err) 
         //send newToken
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        //utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
         return
     }
 

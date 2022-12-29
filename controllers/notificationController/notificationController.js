@@ -1,4 +1,8 @@
+const {ObjectId}  = require('mongodb')
+const database = require("../../lib/database")
+
 const Notification = require("../../models/notification")
+const utilities = require("../../lib/utilities")
 
 const notificationController = {}
 
@@ -13,16 +17,29 @@ notificationController.send = (type, notificationObj, from, to)=>{
             delete notificationObj.owner //removes the owner key incase it is part of the notification object
             const savedNotification = await new Notification(notificationObj).save()
             return resolve(savedNotification)
-
         }
         catch(err){
             throw err
 
         }
-        
+    })  
+}
 
-    })
-    
+notificationController.get = (userID)=>{
+    return new Promise(async (resolve) => {
+        try{
+            const notifications = await database.db.collection(database.collection.notifications).aggregate([
+                {$match: {to: userID}}, 
+                {$limit: 5},
+                {$sort: {_id: -1}}
+            ]).toArray()
+
+            return resolve(notifications)
+        }
+        catch(err){
+            throw err
+        }  
+    })  
 }
 
 
@@ -31,21 +48,22 @@ notificationController.getMore = ('/get-more-notifications', async (req, res)=>{
     const decodedToken = req.decodedToken;
     const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
     let set = req.query.set
+    let notifications;
 
     try{
-        page = parseInt(page)
-        const productCount = await database.db.collection('products').countDocuments()
-        const limit = 20
+        set = parseInt(set)
+        const notificationCount = await database.db.collection(database.collection.notifications).countDocuments({to: ObjectId(decodedToken.userID)})
+        const limit = 10
 
-        if(page && page >= 0 && (page * limit < productCount)){
-            products = await database.db.collection('products').find().skip(page * limit).limit(limit).toArray()
+        if(set >= 0 && (set * limit < notificationCount)){
+            notifications = await database.db.collection(database.collection.notifications).find({to: ObjectId(decodedToken.userID)}).skip(set * limit).limit(limit).sort({_id: -1}).toArray()
         }
         else{
-            products = await database.db.collection('products').find().limit(limit).toArray() 
+            return utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more notifications", entamarketToken: newToken}, true) 
 
         }
 
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, products: products}, true)
+        return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, notifications: notifications, entamarketToken: newToken}, true)
         
     }
     catch(err){
