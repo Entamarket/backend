@@ -12,6 +12,7 @@ const commentController = require('../controllers/commentController/commentContr
 const reactionController = require('../controllers/reactionController/reactionController')
 const homePageController = require('../controllers/homePageController/homePageController')
 const cartController = require('../controllers/cartController/cartController')
+const notificationController = require("../controllers/notificationController/notificationController")
 const {bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader} = require('../lib/middleware')
 
 
@@ -60,17 +61,16 @@ router.post('/comment/add-comment', bodyParser, isJwtValid, decodeToken, isToken
 router.put('/comment/update-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.updateComment)
 router.delete('/comment/delete-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.deleteComment)
 
-
-router.post('/reaction/add-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, reactionController.addReaction)
 router.put('/reaction/update-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, reactionController.updateReaction)
-router.delete('/reaction/delete-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, reactionController.deleteReaction)
-
 
 router.get('/home-page', homePageController.home)
 
 router.put('/cart/update-cart', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, cartController.updateCart)
 router.get('/cart/get-cart', bodyParser, isJwtValid, decodeToken, isTokenIdValid, cartController.getCart)
+router.delete('/cart/delete-cart-item', isJwtValid, decodeToken, isTokenIdValid, cartController.deleteCart)
 
 router.get('/search', appController.search)
+
+router.get("/notification/get-more-notifications", isJwtValid, decodeToken, isTokenIdValid, notificationController.getMore)
 
 module.exports = router
