@@ -17,6 +17,9 @@ reactionController.addReaction = async(req, res, payload, productObj)=>{
         if(payload.reaction === null){
             return utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "can't add null as a first reaction", entamarketToken: newToken}, true)
         }
+
+        //trim the reaction
+        payload.reaction = payload.reaction.trim()
             
         //add owner of reaction
         payload.owner = ObjectId(decodedToken.userID)
@@ -125,6 +128,8 @@ reactionController.updateReaction = ('/update-reaction', async (req, res)=>{
 
                     //check the value of reaction, if it is null, delete the reaction, if not add a new reaction
                     if(payload.reaction !== null){
+                        //trim payload reaction
+                        payload.reaction = payload.reaction.trim()
                         // update reaction
                         await database.updateOne({_id: userReactionObj._id}, database.collection.reactions, payload)
 
