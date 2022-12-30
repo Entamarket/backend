@@ -5,6 +5,7 @@ const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const Trader = require('../../models/trader')
 const email = require('../../lib/email')
+const Cart = require("../../models/cart")
 
 
 const traderControllerAuth = {}
