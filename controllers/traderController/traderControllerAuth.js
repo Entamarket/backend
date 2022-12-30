@@ -93,6 +93,10 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
         const dir = [__dirname, '..', '..', 'multimedia', 'traders', savedTrader.insertedId].join(path.sep) 
         fs.mkdirSync(dir)
 
+        //create cart
+        const cart = new Cart({owner: savedTrader.insertedId})
+        await cart.save()
+
         //send a new token
         const newToken = utilities.jwt('sign', {userID: savedTrader.insertedId, tokenFor: "trader"})
             

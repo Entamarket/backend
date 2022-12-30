@@ -63,7 +63,7 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
   let payload = JSON.parse(req.body)
   try{
     //Check if the data sent is valid
-    if(utilities.validator(payload, ['firstName', 'lastName', 'username', 'phoneNumber']).isValid){
+    if(utilities.traderProfileUpdateValidator(payload, ['firstName', 'lastName', 'username', 'phoneNumber', "bankDetails"]).isValid){
 
       //remove all white spaces from user data if any
       payload = utilities.trimmer(payload)

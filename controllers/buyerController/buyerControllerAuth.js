@@ -104,7 +104,7 @@ buyerControllerAuth.verifyOtp = ('/signup/account-verification', async (req, res
         fs.mkdirSync(dir)
 
         //create cart
-        const cart = new Cart({owner: savedBuyer.insertedId, products: []})
+        const cart = new Cart({owner: savedBuyer.insertedId})
         await cart.save() 
 
         //send a new token
