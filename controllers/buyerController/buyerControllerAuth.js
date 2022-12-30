@@ -50,6 +50,8 @@ buyerControllerAuth.signup = ('/signup', async (req, res)=>{
 
         //send token to client
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: token}, true)
+
+        
       
       }
       else{

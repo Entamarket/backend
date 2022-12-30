@@ -10,7 +10,7 @@ cartController.updateCart = ('/update-cart', async (req, res)=>{
     const decodedToken = req.decodedToken
 
     //create newToken
-    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
+    //const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
 
     //Extract payload from body
     const payload = JSON.parse(req.body)
@@ -132,5 +132,6 @@ cartController.deleteCart = ('/delete-cart-item', async (req, res)=>{
     }
 
 })
+
 
 module.exports = cartController

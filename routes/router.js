@@ -72,5 +72,6 @@ router.delete('/cart/delete-cart-item', isJwtValidNB, decodeToken, isTokenIdVali
 router.get('/search', appController.search)
 
 router.get("/notification/get-more-notifications", isJwtValid, decodeToken, isTokenIdValid, notificationController.getMore)
+router.get("/notification/get-product-via-notification", isJwtValidNB, decodeToken, isTokenIdValid, notificationController.getProductViaNotification)
 
 module.exports = router

@@ -73,4 +73,42 @@ notificationController.getMore = ('/get-more-notifications', async (req, res)=>{
         return
     }
 })
+
+
+notificationController.getProductViaNotification = ('/get-product-via-notification', async (req, res)=>{
+    //extract decoded token
+    const decodedToken = req.decodedToken;
+    //extract payload from body
+    const notificationID = ObjectId(req.query.notificationID)
+
+    try{
+        //check if notification exist
+        const notificationObj = await database.findOne({_id: notificationID}, database.collection.notifications)
+
+        if(notificationObj){
+            
+            //get product
+            const productObj = await database.findOne({_id: ObjectId(notificationObj.productID)}, database.collection.products, ["comments", "reactions"], 0)
+            productObj.notification = notificationObj
+
+            //change notification read recipt to true
+            await database.updateOne({_id: notificationObj._id}, database.collection.notifications, {read: true})
+            return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, notificationData: productObj}, true)
+  
+        }
+        else{
+           return utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this product does not exist"}, true)
+        }
+        
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+
+
+})
+
 module.exports = notificationController

@@ -52,7 +52,7 @@ reactionController.addReaction = async(req, res, payload, productObj)=>{
         reactionObj.owner = owner
 
         //send notification
-        await send("reaction", {...reactionObj}, reactionObj.owner._id, productObj.owner)
+        await send("reaction", {...reactionObj}, reactionObj.owner, productObj.owner)
 
         //send new token
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, reactionData: reactionObj, entamarketToken: newToken}, true)
