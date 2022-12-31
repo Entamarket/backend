@@ -18,20 +18,26 @@ reactionController.getReactions = ('/get-reactions', async (req, res)=>{
         const reactionCount = await database.db.collection(database.collection.reactions).countDocuments({productID: ObjectId(productID)})
         const limit = 5
         //get reactions
-        let reactions = await database.db.collection(database.collection.reactions).aggregate([
-            {$match: {productID: ObjectId(productID)}},
-            {$sort: {_id: -1}},
-            {$skip: set * limit},
-            {$limit: limit},
-            {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}}
-        ]).toArray()
-        
-        reactions.forEach((element, index) => {
-          reactions[index].owner = element.owner[0]  
-        });
+        if(set >= 0 && (set * limit < reactionCount)){
+            let reactions = await database.db.collection(database.collection.reactions).aggregate([
+                {$match: {productID: ObjectId(productID)}},
+                {$sort: {_id: -1}},
+                {$skip: set * limit},
+                {$limit: limit},
+                {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}}
+            ]).toArray()
+            
+            reactions.forEach((element, index) => {
+              reactions[index].owner = element.owner[0]  
+            });
+    
+            //send response
+            return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, reactions: reactions}, true)
 
-        //send response
-        return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, reactions: reactions}, true)
+        }
+        else{
+            return utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more no more comments"}, true)
+        }   
          
     }
     catch(err){
