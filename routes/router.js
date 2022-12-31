@@ -57,11 +57,13 @@ router.put('/product/update-product', isJwtValid, decodeToken, isTokenIdValid, u
 router.delete('/product/delete-product', isJwtValid, decodeToken, isTokenIdValid, productController.deleteProduct)
 router.get('/product/get-product', productController.getProduct)
 
-router.post('/comment/add-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.addComment)
-router.put('/comment/update-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.updateComment)
-router.delete('/comment/delete-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, commentController.deleteComment)
+router.post('/comment/add-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, commentController.addComment)
+router.get('/comment/get-comments', commentController.getComments)
+router.put('/comment/update-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, commentController.updateComment)
+router.delete('/comment/delete-comment', isJwtValid, decodeToken, isTokenIdValid, commentController.deleteComment)
 
 router.put('/reaction/update-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, reactionController.updateReaction)
+router.get('/reaction/get-reactions', reactionController.getReactions)
 
 router.get('/home-page', homePageController.home)
 

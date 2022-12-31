@@ -7,6 +7,43 @@ const {send} = require("../notificationController/notificationController")
 
 const reactionController = {}
 
+reactionController.getReactions = ('/get-reactions', async (req, res)=>{
+    //extract decoded token
+    const decodedToken = req.decodedToken
+    const productID = req.query.productID
+    let set = req.query.set
+
+    try{
+        set = parseInt(set)
+        const reactionCount = await database.db.collection(database.collection.reactions).countDocuments({productID: ObjectId(productID)})
+        const limit = 5
+        //get reactions
+        let reactions = await database.db.collection(database.collection.reactions).aggregate([
+            {$match: {productID: ObjectId(productID)}},
+            {$sort: {_id: -1}},
+            {$skip: set * limit},
+            {$limit: limit},
+            {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}}
+        ]).toArray()
+        
+        reactions.forEach((element, index) => {
+          reactions[index].owner = element.owner[0]  
+        });
+
+        //send response
+        return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, reactions: reactions}, true)
+         
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+    
+
+})
+
 reactionController.addReaction = async(req, res, payload, productObj)=>{
     //extract decoded token
     const decodedToken = req.decodedToken
@@ -37,22 +74,14 @@ reactionController.addReaction = async(req, res, payload, productObj)=>{
 
         let reactionObj = await database.db.collection(database.collection.reactions).aggregate([
             {$match: {_id: savedReaction.insertedId}}, 
-            {$lookup: {from: decodedToken.tokenFor +'s', localField: "owner", foreignField: "_id", as: "owner"}}
+            {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}}
         ]).toArray()
 
         reactionObj = reactionObj[0]
         reactionObj.owner = reactionObj.owner[0]
-        const owner = {}
-        for(data in reactionObj.owner){
-            if(data === '_id'|| data === 'firstName' || data === 'lastName' || data === 'username'){
-                owner[data] = reactionObj.owner[data]
-            } 
-        }
-
-        reactionObj.owner = owner
 
         //send notification
-        await send("reaction", {...reactionObj}, reactionObj.owner, productObj.owner)
+        await send("reaction", {...reactionObj}, reactionObj.owner._id, productObj.owner)
 
         //send new token
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, reactionData: reactionObj, entamarketToken: newToken}, true)
@@ -137,20 +166,11 @@ reactionController.updateReaction = ('/update-reaction', async (req, res)=>{
 
                         let  updatedReactionObj = await database.db.collection(database.collection.reactions).aggregate([
                             {$match: {_id: userReactionObj._id}}, 
-                            {$lookup: {from: decodedToken.tokenFor +'s', localField: "owner", foreignField: "_id", as: "owner"}}
+                            {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}}
                         ]).toArray()
 
                         updatedReactionObj = updatedReactionObj[0]
                         updatedReactionObj.owner = updatedReactionObj.owner[0]
-                        const owner = {}
-                        for(data in updatedReactionObj.owner){
-                            if(data === '_id'|| data === 'firstName' || data === 'lastName' || data === 'username')
-                            owner[data] = updatedReactionObj.owner[data] 
-                        }
-
-                        updatedReactionObj.owner = owner
-
-                        //send notification
 
                         //send new token
                         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, reactionData: updatedReactionObj, entamarketToken: newToken}, true)

@@ -4,6 +4,7 @@ const {ObjectId}  = require('mongodb')
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const Buyer = require('../../models/buyer')
+const User = require("../../models/user")
 const email = require('../../lib/email')
 const Cart = require('../../models/cart')
 
@@ -96,7 +97,10 @@ buyerControllerAuth.verifyOtp = ('/signup/account-verification', async (req, res
         const buyer = new Buyer(rest, false)
         const savedBuyer = await buyer.save()
 
-        //delete the data in pendingTraders collection
+        //add part of buyers data to user collection
+        await new User({firstName: rest.firstName, lastName: rest.lastName, username: rest.username, accountType: "buyer", primaryID: savedBuyer.insertedId}).save()
+
+        //delete the data in pendingBuyers collection
         await database.deleteOne({_id: pendingBuyerObj._id}, database.collection.pendingBuyers)
 
         //Create folder in multimedia

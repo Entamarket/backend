@@ -7,6 +7,49 @@ const {send} = require("../notificationController/notificationController")
 
 const commentController = {}
 
+commentController.getComments = ('/get-comments', async (req, res)=>{
+    //extract decoded token
+    const decodedToken = req.decodedToken
+    const productID = req.query.productID
+    let set = req.query.set
+
+    try{
+        set = parseInt(set)
+        const commentCount = await database.db.collection(database.collection.comments).countDocuments({productID: ObjectId(productID)})
+        const limit = 5
+        //get comments
+        if(set >= 0 && (set * limit < commentCount)){
+            let comments = await database.db.collection(database.collection.comments).aggregate([
+                {$match: {productID: ObjectId(productID)}},
+                {$sort: {_id: -1}},
+                {$skip: set * limit},
+                {$limit: limit},
+                {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}}
+            ]).toArray()
+            
+            comments.forEach((element, index) => {
+              comments[index].owner = element.owner[0]  
+            });
+    
+            //send response
+            return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, comments: comments}, true)
+
+        }
+        else{
+            return utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more no more comments"}, true) 
+        }
+         
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+    
+
+})
+
 commentController.addComment = ('/add-comment', async (req, res)=>{
     //extract decoded token
     const decodedToken = req.decodedToken
@@ -36,21 +79,14 @@ commentController.addComment = ('/add-comment', async (req, res)=>{
                 //get comment data
                 let commentObj = await database.db.collection(database.collection.comments).aggregate([
                     {$match: {_id: savedComment.insertedId}}, 
-                    {$lookup: {from: decodedToken.tokenFor +'s', localField: "owner", foreignField: "_id", as: "owner"}}
+                    {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}}
                 ]).toArray()
 
                 commentObj = commentObj[0]
                 commentObj.owner = commentObj.owner[0]
-                const owner = {}
-                for(data in commentObj.owner){
-                    if(data === '_id'|| data === 'firstName' || data === 'lastName' || data === 'username')
-                    owner[data] = commentObj.owner[data] 
-                }
-
-                commentObj.owner = owner
 
                // send notification to trader
-               await send("comment", {...commentObj}, commentObj.owner, productObj.owner)
+               await send("comment", {...commentObj}, commentObj.owner._id, productObj.owner)
                 
                 //send new token
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, commentData: commentObj, entamarketToken: newToken}, true)
@@ -100,20 +136,12 @@ commentController.updateComment = ('/update-comment', async (req, res)=>{
 
                 let  updatedCommentObj = await database.db.collection(database.collection.comments).aggregate([
                     {$match: {_id: commentID}}, 
-                    {$lookup: {from: decodedToken.tokenFor +'s', localField: "owner", foreignField: "_id", as: "owner"}}
+                    {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}}
                 ]).toArray()
 
                 updatedCommentObj = updatedCommentObj[0]
                 updatedCommentObj.owner = updatedCommentObj.owner[0]
-                const owner = {}
-                for(data in updatedCommentObj.owner){
-                    if(data === '_id'|| data === 'firstName' || data === 'lastName' || data === 'username')
-                    owner[data] = updatedCommentObj.owner[data] 
-                }
-
-                updatedCommentObj.owner = owner
-
-                //const updatedCommentObj = await database.findOne({_id: commentID}, database.collection.comments)
+                
 
                 //send new token
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, commentData: updatedCommentObj, entamarketToken: newToken}, true)

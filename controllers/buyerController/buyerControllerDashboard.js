@@ -60,7 +60,7 @@ buyerControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
         //remove all white spaces from user data if any
         payload = utilities.trimmer(payload)
   
-        //get trader object
+        //get buyer object
         const buyerObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.buyers, ['firstName', 'lastName', 'username', 'phoneNumber'], 1)
   
         //check if email, username and phone number of the payload are the same with the buyer object, if they are the same, leave them like that but if they are different make sure that they are unique
@@ -78,8 +78,12 @@ buyerControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
         }
         
         if(errorArray.length < 1){
-          //update the trader profile
+          //update the buyer profile
           await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.buyers, payload)
+          //update user profile
+          let userPayload = payload
+          delete userPayload.phoneNumber
+          await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, userPayload)
   
           //send token
           utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
@@ -284,8 +288,14 @@ buyerControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>{
     //delete trader multimedia folder
     const dir = [__dirname, '..', '..', 'multimedia', 'buyers', decodedToken.userID.toString()].join(path.sep)
     await fs.promises.rmdir(dir, {recursive: true})
-    
-    //delete the account
+
+    //delete all notifications to trader
+    await database.deleteMany({to: ObjectId(decodedToken.userID)}, database.collection.notifications)
+    //delete buyer cart
+    await database.deleteOne({owner: ObjectId(decodedToken.userID)}, database.collection.carts)
+    //delete account from users collection
+    await database.deleteOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
+    //delete account from buyers collection
     await database.deleteOne({_id: ObjectId(decodedToken.userID)}, database.collection.buyers)
 
     //response

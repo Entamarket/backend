@@ -66,8 +66,15 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
     if(utilities.traderProfileUpdateValidator(payload, ['firstName', 'lastName', 'username', 'phoneNumber', "bankDetails"]).isValid){
 
       //remove all white spaces from user data if any
-      payload = utilities.trimmer(payload)
-
+      if(payload.bankDetails){
+        let bankDetails = payload.bankDetails
+        delete payload.bankDetails
+        payload = utilities.trimmer(payload)
+        bankDetails = utilities.trimmer(bankDetails)
+        payload.bankDetails = bankDetails
+      }
+      else{payload = utilities.trimmer(payload)}
+      
       //get trader object
       const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ['firstName', 'lastName', 'username', 'phoneNumber'], 1)
 
@@ -110,6 +117,11 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
       if(errorArray.length < 1){
         //update the trader profile
         await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, payload)
+        //update user profile
+        let userPayload = payload
+        delete userPayload.phoneNumber
+        await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, userPayload)
+
 
         //send token
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
@@ -121,7 +133,7 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
       }
     }
     else{
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid data`, entamarketToken: newToken}, true )
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, errorObj: utilities.traderProfileUpdateValidator(payload, ['firstName', 'lastName', 'username', 'phoneNumber', "bankDetails"]), entamarketToken: newToken}, true )
       return
     }
 
@@ -322,7 +334,13 @@ traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>
     const dir = [__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID.toString()].join(path.sep)
     await fs.promises.rmdir(dir, {recursive: true})
     
-    //delete the account
+    //delete all notifications to trader
+    await database.deleteMany({to: ObjectId(decodedToken.userID)}, database.collection.notifications)
+    //delete trader cart
+    await database.deleteOne({owner: ObjectId(decodedToken.userID)}, database.collection.carts)
+    //delete the account from users collection
+    await database.deleteOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
+    //delete the account from traders collection
     await database.deleteOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders)
 
     //response

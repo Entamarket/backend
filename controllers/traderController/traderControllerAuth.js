@@ -4,6 +4,7 @@ const {ObjectId}  = require('mongodb')
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const Trader = require('../../models/trader')
+const User = require("../../models/user")
 const email = require('../../lib/email')
 const Cart = require("../../models/cart")
 
@@ -86,6 +87,9 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
         const {_id, createdAt, otp, ...rest} = pendingTraderObj
         const trader = new Trader(rest, false)
         const savedTrader = await trader.save()
+
+        //add part of trader data to user collection
+        await new User({firstName: rest.firstName, lastName: rest.lastName, username: rest.username, accountType: "trader", primaryID: savedTrader.insertedId}).save()
 
         //delete the data in pendingTraders collection
         await database.deleteOne({_id: pendingTraderObj._id}, database.collection.pendingTraders)
