@@ -13,6 +13,7 @@ const reactionController = require('../controllers/reactionController/reactionCo
 const homePageController = require('../controllers/homePageController/homePageController')
 const cartController = require('../controllers/cartController/cartController')
 const notificationController = require("../controllers/notificationController/notificationController")
+const userController = require("../controllers/userController/userController")
 const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader} = require('../lib/middleware')
 
 
@@ -43,6 +44,8 @@ router.put('/buyer/dashboard/update-email', bodyParser, isJwtValid, decodeToken,
 router.put('/buyer/dashboard/update-password', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.updatePassword)
 router.put('/buyer/dashboard/verify-update-otp', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.verifyUpdateOtp)
 router.delete('/buyer/dashboard/delete-account', isJwtValid, decodeToken, isTokenIdValid, buyerControllerDashboard.deleteAccount)
+
+router.get("/user/get-user", isJwtValidNB, decodeToken, isTokenIdValid, userController.getUser)
 
 router.post('/shop/create-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, isTrader, shopController.createShop)
 router.put('/shop/update-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.updateShop)

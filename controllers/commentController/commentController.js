@@ -8,8 +8,7 @@ const {send} = require("../notificationController/notificationController")
 const commentController = {}
 
 commentController.getComments = ('/get-comments', async (req, res)=>{
-    //extract decoded token
-    const decodedToken = req.decodedToken
+   //get productID
     const productID = req.query.productID
     let set = req.query.set
 
@@ -36,7 +35,7 @@ commentController.getComments = ('/get-comments', async (req, res)=>{
 
         }
         else{
-            return utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more no more comments"}, true) 
+            return utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more comments"}, true) 
         }
          
     }
