@@ -253,6 +253,11 @@ buyerControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, res
         //update the data of the buyer
         await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.buyers, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
 
+        //update user data
+        if([userObj.dataToUpdate.parameter] === "phoneNumber" || [userObj.dataToUpdate.parameter] === "email"){
+          await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.users, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
+        }
+
         //delete user from pendingUsersUpdates collection
         await database.deleteOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates)
 
@@ -293,6 +298,10 @@ buyerControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>{
     await database.deleteMany({to: ObjectId(decodedToken.userID)}, database.collection.notifications)
     //delete buyer cart
     await database.deleteOne({owner: ObjectId(decodedToken.userID)}, database.collection.carts)
+    //delete all comments
+    await database.deleteMany({owner: ObjectId(decodedToken.userID)}, database.collection.comments)
+    //delete all reactions
+    await database.deleteMany({owner: ObjectId(decodedToken.userID)}, database.collection.reactions)
     //delete account from users collection
     await database.deleteOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
     //delete account from buyers collection

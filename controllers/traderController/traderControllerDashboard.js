@@ -119,8 +119,15 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
         await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, payload)
         //update user profile
         let userPayload = payload
-        delete userPayload.phoneNumber
-        await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, userPayload)
+        if(userPayload.bankDetails && Object.keys(userPayload).length > 1){
+          delete userPayload.bankDetails
+          await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, userPayload)
+        }
+        
+        if(!userPayload.bankDetails && Object.keys(userPayload).length >1){
+          await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, userPayload)
+
+        }
 
 
         //send token
@@ -232,6 +239,10 @@ traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, re
       if(payload.otp === userObj.otp){
         //update the data of the trader
         await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
+        //update user data
+        if([userObj.dataToUpdate.parameter] === "phoneNumber" || [userObj.dataToUpdate.parameter] === "email"){
+          await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.users, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
+        }
 
         //delete user from pendingUsersUpdates collection
         await database.deleteOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates)
@@ -338,6 +349,10 @@ traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>
     await database.deleteMany({to: ObjectId(decodedToken.userID)}, database.collection.notifications)
     //delete trader cart
     await database.deleteOne({owner: ObjectId(decodedToken.userID)}, database.collection.carts)
+    //delete all comments
+    await database.deleteMany({owner: ObjectId(decodedToken.userID)}, database.collection.comments)
+    //delete all reactions
+    await database.deleteMany({owner: ObjectId(decodedToken.userID)}, database.collection.reactions)
     //delete the account from users collection
     await database.deleteOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
     //delete the account from traders collection
