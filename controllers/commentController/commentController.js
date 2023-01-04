@@ -85,7 +85,7 @@ commentController.addComment = ('/add-comment', async (req, res)=>{
                 commentObj.owner = commentObj.owner[0]
 
                // send notification to trader
-               await send("comment", {...commentObj}, commentObj.owner._id, productObj.owner)
+               await send("comment", {...commentObj}, commentObj.owner.primaryID, productObj.owner)
                 
                 //send new token
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, commentData: commentObj, entamarketToken: newToken}, true)

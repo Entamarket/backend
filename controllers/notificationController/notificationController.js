@@ -12,9 +12,21 @@ notificationController.send = (type, notificationObj, from, to)=>{
             notificationObj.type = type
             notificationObj.from = from
             notificationObj.to = to
-            if(type === "comment") delete notificationObj.postedAt; //removed the addedAt property because there is already a notifiedOn property for the notification
-            if(type === "reaction") delete notificationObj.reactedAt //removed the addedAt property because there is already a notifiedOn property for the notification
-            delete notificationObj.owner //removes the owner key incase it is part of the notification object
+            if(type === "comment"){
+                delete notificationObj.postedAt; //removed the addedAt property because there is already a notifiedOn property for the notification
+                delete notificationObj.owner //removes the owner key incase it is part of the notification object
+            } 
+            if(type === "reaction"){
+                delete notificationObj.reactedAt //removed the addedAt property because there is already a notifiedOn property for the notification
+                delete notificationObj.owner //removes the owner key incase it is part of the notification object
+            } 
+            if(type === "purchase"){
+                notificationObj.productID = notificationObj.product
+                delete notificationObj.product
+                delete notificationObj.buyer
+                delete notificationObj.trader
+            }
+            
             const savedNotification = await new Notification(notificationObj).save()
             return resolve(savedNotification)
         }
@@ -35,6 +47,10 @@ notificationController.get = (userID)=>{
                 {$lookup: {from: "users", localField: "from", foreignField: "primaryID", as: "from"}}
                 
             ]).toArray()
+
+            notifications.forEach((notification, index)=>{
+                notifications[index].from = notification.from[0]
+            })
 
             return resolve(notifications)
         }
