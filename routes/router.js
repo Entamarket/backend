@@ -14,7 +14,8 @@ const homePageController = require('../controllers/homePageController/homePageCo
 const cartController = require('../controllers/cartController/cartController')
 const notificationController = require("../controllers/notificationController/notificationController")
 const userController = require("../controllers/userController/userController")
-//const 
+const checkoutController = require("../controllers/checkoutController/checkoutController")
+const deliveryController = require("../controllers/deliveryController/deliveryController") 
 const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader} = require('../lib/middleware')
 
 
@@ -80,5 +81,7 @@ router.get('/search', appController.search)
 router.get("/notification/get-more-notifications", isJwtValid, decodeToken, isTokenIdValid, notificationController.getMore)
 router.get("/notification/get-product-via-notification", isJwtValidNB, decodeToken, isTokenIdValid, notificationController.getProductViaNotification)
 
-router.post("/checkout/get-checkout", isJwtValidNB, decodeToken, isTokenIdValid, )
+router.get("/checkout/get-checkout", isJwtValidNB, decodeToken, isTokenIdValid, checkoutController.getCheckout)
+
+router.delete("/delivery/confirm-delivery", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.confirmDelivery)
 module.exports = router

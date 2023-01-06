@@ -1,4 +1,3 @@
-const {Decimal128} = require('mongodb')
 const utilities = require('../lib/utilities');
 const database = require('../lib/database')
 
@@ -23,7 +22,7 @@ class Trader{
         }
         else{
             this.props.shops = []
-            this.props.accountBalance = Decimal128("0.00")
+            this.props.accountBalance = 0
             this.props.joinedAt = new Date().toLocaleString()
             const collection = db.collection(database.collection.traders)
             return collection.insertOne(this.props)

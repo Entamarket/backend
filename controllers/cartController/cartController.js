@@ -15,23 +15,31 @@ cartController.updateCart = ('/update-cart', async (req, res)=>{
     try{
         //validate payload
         if(utilities.cartValidator(payload, ["productID", "noOfItems"]).isValid){
+            payload.productID = ObjectId(payload.productID)
             //Check if product exists in database
-            const productObj = await database.findOne({_id: ObjectId(payload.productID)}, database.collection.products, ["_id", "stock"], 1)
+            const productObj = await database.findOne({_id: payload.productID}, database.collection.products, ["_id", "stock"], 1)
             if(productObj){
                 //check if number of items added is < or = the stock
                 if(payload.noOfItems > 0 && payload.noOfItems <= parseInt(productObj.stock)){
                     //add product to cart uniqley
-                    const updatedCartInfo = await database.db.collection(database.collection.carts).updateOne({owner: ObjectId(decodedToken.userID)}, {$addToSet: {products: ObjectId(payload.productID)}})
+                    const updatedCartInfo = await database.db.collection(database.collection.carts).updateOne({owner: ObjectId(decodedToken.userID)}, {$addToSet: {products: payload}})
 
                     //check if product was already present
                     if(updatedCartInfo.modifiedCount === 1){
                         //get cart object
                         let cartObj = await database.db.collection(database.collection.carts).aggregate([
                             {$match: {owner: ObjectId(decodedToken.userID)}}, 
-                            {$lookup: {from: "products", localField: "products", foreignField: "_id", as: "products"}}
+                            {$unwind: "$products"}, 
+                            {$lookup: {from: "products", localField: "products.productID", foreignField: "_id", as: "products.product"}},
+                            {$unset: "products.productID"},
+                            {$replaceWith: {
+                                $setField: {
+                                    field: "product",
+                                    input: "$products",
+                                    value: {$arrayElemAt: ["$products.product", 0]}
+                                }
+                            }}
                         ]).toArray()
-
-                        cartObj = cartObj[0]
 
                         //send response and token
                         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj}, true )
@@ -79,10 +87,18 @@ cartController.getCart = ('/get-cart', async (req, res)=>{
         //get cart object
         let cartObj = await database.db.collection(database.collection.carts).aggregate([
             {$match: {owner: ObjectId(decodedToken.userID)}}, 
-            {$lookup: {from: "products", localField: "products", foreignField: "_id", as: "products"}}
+            {$unwind: "$products"}, 
+            {$lookup: {from: "products", localField: "products.productID", foreignField: "_id", as: "products.product"}},
+            {$unset: "products.productID"},
+            {$replaceWith: {
+                $setField: {
+                    field: "product",
+                    input: "$products",
+                    value: {$arrayElemAt: ["$products.product", 0]}
+                }
+            }}
         ]).toArray()
 
-        cartObj = cartObj[0]
 
         // send response
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj}, true )
@@ -106,15 +122,23 @@ cartController.deleteCart = ('/delete-cart-item', async (req, res)=>{
 
     try{
         //delete product from cart
-        await database.db.collection(database.collection.carts).updateOne({owner: ObjectId(decodedToken.userID)}, {$pull: {products: productID}})
+        await database.db.collection(database.collection.carts).updateOne({owner: ObjectId(decodedToken.userID)}, {$pull: {products: {productID: productID}}})
 
         //get cart object
         let cartObj = await database.db.collection(database.collection.carts).aggregate([
             {$match: {owner: ObjectId(decodedToken.userID)}}, 
-            {$lookup: {from: "products", localField: "products", foreignField: "_id", as: "products"}}
+            {$unwind: "$products"}, 
+            {$lookup: {from: "products", localField: "products.productID", foreignField: "_id", as: "products.product"}},
+            {$unset: "products.productID"},
+            {$replaceWith: {
+                $setField: {
+                    field: "product",
+                    input: "$products",
+                    value: {$arrayElemAt: ["$products.product", 0]}
+                }
+            }}
         ]).toArray()
 
-        cartObj = cartObj[0]
 
         //send response
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj}, true )
