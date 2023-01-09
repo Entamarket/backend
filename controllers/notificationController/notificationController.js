@@ -65,7 +65,7 @@ notificationController.get = (userID)=>{
 
 
 notificationController.getMore = ('/get-more-notifications', async (req, res)=>{
-    console.log("hi")
+    
     //extract decoded token
     const decodedToken = req.decodedToken;
     const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})

@@ -37,9 +37,9 @@ adminAuth.login = ('/login', async (req, res)=>{
 
             }
             else{
-                console.log("username")
-                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "wrong username or password"}, true )
-                return
+                
+              utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "wrong username or password"}, true )
+              return
             }
 
         }

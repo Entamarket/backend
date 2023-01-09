@@ -178,7 +178,7 @@ commentController.deleteComment = ('/delete-comment', async (req, res)=>{
 
         //check if the user owns the comment
         const commentObj = await database.findOne({_id: commentID}, database.collection.comments, ['_id', 'productID', 'owner'], 1)
-        console.log(commentObj)
+        
         if(commentObj?.owner.toString() === decodedToken.userID){
 
             // delete comment
