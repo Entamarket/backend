@@ -44,6 +44,7 @@ checkoutController.getCheckout = ('/get-checkout', async (req, res)=>{
             }
             const purchases = []
             const responsePurchases = []
+            const logisticsPurchases = []
             
             //loop through the cart and process the purchase
             for(let item of cart){
@@ -67,6 +68,7 @@ checkoutController.getCheckout = ('/get-checkout', async (req, res)=>{
                 logisticsPurchaseCopy.product = item.product._id
                 logisticsPurchaseCopy.noOfItems = item.noOfItems
                 logisticsPurchaseCopy.trader = item.product.owner.primaryID
+                logisticsPurchases.push(logisticsPurchaseCopy)
 
                 //fill up responsePurchaseCopy
                 const responseProductObj = {...item.product}
@@ -98,15 +100,19 @@ checkoutController.getCheckout = ('/get-checkout', async (req, res)=>{
                 await notificationController.send("purchase", traderPurchaseCopy, ObjectId(decodedToken.userID), item.product.owner.primaryID)
 
             }
+            
+            //add checkoutID and buyer to logistics notification
+            const logisticsNotification = {checkoutID: checkoutObj.insertedId, buyer: ObjectId(decodedToken.userID),  purchases: logisticsPurchases}
 
             //send notification to logistics
-            //{PLEASE REMEMBER TO SEND NOTIFICATIONS TO THE LOGISTICS DEPARTMENT}
+            const logisticsID = ObjectId("63bb57e030ecce63a6685040")
+            await notificationController.send("purchase", logisticsNotification, ObjectId(decodedToken.userID), logisticsID)
 
             //add checkoutID to response
             const purchaseDetailsForResponse = {checkoutID: checkoutObj.insertedId, purchases: responsePurchases}
 
             //clear cart
-            await database.updateOne({owner: ObjectId(decodedToken.userID)}, {products: []})
+            await database.updateOne({owner: ObjectId(decodedToken.userID)}, database.collection.carts, {products: []})
 
             //send response
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, checkoutDetails: purchaseDetailsForResponse}, true)

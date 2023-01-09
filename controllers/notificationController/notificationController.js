@@ -65,11 +65,12 @@ notificationController.get = (userID)=>{
 
 
 notificationController.getMore = ('/get-more-notifications', async (req, res)=>{
+    console.log("hi")
     //extract decoded token
     const decodedToken = req.decodedToken;
     const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
     let set = req.query.set
-    let notifications;
+
 
     try{
         set = parseInt(set)
@@ -97,7 +98,7 @@ notificationController.getMore = ('/get-more-notifications', async (req, res)=>{
 
         }
 
-        return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, notifications: notifications, entamarketToken: newToken}, true)
+        
         
     }
     catch(err){

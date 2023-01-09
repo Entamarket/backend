@@ -15,7 +15,6 @@ deliveryController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
     try{
          
         //Get the pendingDelivery object
-        //let pendingDelivery = await database.findOne({_id: checkoutID}, database.collection.pendingDeliveries)
 
         let pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).aggregate([
             {$match: {_id: checkoutID}},
@@ -24,7 +23,6 @@ deliveryController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
             {$unwind: "$purchases.product"}
         ]).toArray()
 
-        console.log(pendingDelivery)
 
         //check if delivery exists
         if(pendingDelivery){
@@ -67,6 +65,93 @@ deliveryController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this delivery does not exist"}, true)
             return
         }
+
+    }
+    catch(err){
+        console.log(err) 
+        //response   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+})
+
+deliveryController.getPendingDeliveries = ('/get-pending-deliveries', async (req, res)=>{
+    const decodedToken = req.decodedToken
+    const buyerID = ObjectId(decodedToken.userID)
+    let set = req.query.set
+    let pendingDelivery;
+
+    try{
+        //get all delivery 5 at a time for now but later make it 20
+        set = parseInt(set)
+        const pendingDeliveryCount = await database.db.collection(database.collection.pendingDeliveries).countDocuments({buyer: buyerID})
+        const limit = 5
+
+        if(typeof set === "number" && set >= 0 && (set * limit < pendingDeliveryCount)){
+            pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).find({buyer: buyerID}).skip(set * limit).limit(limit).toArray()
+
+            if(pendingDelivery.length > 0 ){
+                utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, pendingDeliveries: pendingDelivery}, true)
+                return
+            }
+            else{
+                //send response
+                utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more pending deliveries"}, true)
+                return
+            }
+        }
+        else{
+            //send response
+            utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more pending deliveries"}, true)
+            return
+        }
+        
+    }
+    catch(err){
+        console.log(err) 
+        //response   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+
+})
+
+
+deliveryController.getSinglependingDelivery = ('/get-single-pending-delivery', async (req, res)=>{
+    const decodedToken = req.decodedToken
+    const buyerID = ObjectId(decodedToken.userID)
+    const checkoutID = ObjectId(req.query.checkoutID)
+
+    try{
+        let pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).aggregate([
+            {$match: {_id: checkoutID}},
+            {$unwind: "$purchases"},
+            {$lookup: {from: "users", localField: "purchases.trader", foreignField: "primaryID", as: "purchases.trader"}},
+            {$unwind: "$purchases.trader"},
+            {$lookup: {from: "products", localField: "purchases.product", foreignField: "_id", as: "purchases.product"}},
+            {$unwind: "$purchases.product"},
+            {$group: {_id: "$_id", buyer: {$first: "$buyer"}, postedAt: {$first: "$postedAt"}, purchases: {$push: "$purchases"}}}
+
+        ]).toArray()
+
+        pendingDelivery = pendingDelivery[0]
+        if(pendingDelivery){
+            
+            //check if buyer owns this delivery
+            if(buyerID.toString() === pendingDelivery.buyer.toString()){
+                utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, pendingDelivery}, true)
+                return
+            }
+            else{
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "This buyer does not own this delivery"}, true)
+                return
+            }
+            
+        }
+        else{
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this delivery does not exist"}, true)
+            return
+        }   
 
     }
     catch(err){

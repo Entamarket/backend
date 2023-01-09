@@ -16,7 +16,11 @@ const notificationController = require("../controllers/notificationController/no
 const userController = require("../controllers/userController/userController")
 const checkoutController = require("../controllers/checkoutController/checkoutController")
 const deliveryController = require("../controllers/deliveryController/deliveryController") 
-const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader} = require('../lib/middleware')
+const adminController = require("../controllers/adminController/adminController")
+const adminAuth = require("../controllers/adminController/adminAuth")
+const logisticsController = require("../controllers/logisticsController/logisticsController")
+const logisticsAuth = require("../controllers/logisticsController/logisticsAuth")
+const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader, isAdmin, isLogistics} = require('../lib/middleware')
 
 
 router.use('/multimedia/traders', multimedia)
@@ -84,4 +88,26 @@ router.get("/notification/get-product-via-notification", isJwtValidNB, decodeTok
 router.get("/checkout/get-checkout", isJwtValidNB, decodeToken, isTokenIdValid, checkoutController.getCheckout)
 
 router.delete("/delivery/confirm-delivery", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.confirmDelivery)
+router.get("/delivery/get-pending-deliveries", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getPendingDeliveries)
+router.get("/delivery/get-single-pending-delivery", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getSinglependingDelivery)
+
+router.get("/admin/get-single-pending-delivery", isJwtValidNB, decodeToken, isAdmin, adminController.getSinglependingDelivery)
+router.get("/admin/get-pending-deliveries", isJwtValidNB, decodeToken, isAdmin, adminController.getPendingDeliveries)
+router.get("/admin/get-counts", isJwtValidNB, decodeToken, isAdmin, adminController.getCounts)
+router.put("/admin/login", bodyParser, isJSON, adminAuth.login)
+router.put('/admin/update-password', bodyParser, isJwtValid, decodeToken, isAdmin, isJSON, adminAuth.updatePassword)
+router.put('/admin/verify-update-otp', bodyParser, isJwtValid, decodeToken, isAdmin, isJSON, adminAuth.verifyUpdateOtp)
+router.put('/admin/update-email', bodyParser, isJwtValid, decodeToken, isAdmin, isJSON, adminAuth.updateEmail)
+router.put('/admin/update-username', bodyParser, isJwtValid, decodeToken, isAdmin, isJSON, adminAuth.updateUsername)
+
+router.get("/logistics/get-single-pending-delivery", isJwtValidNB, decodeToken, isLogistics, logisticsController.getSinglependingDelivery)
+router.get("/logistics/get-pending-deliveries", isJwtValidNB, decodeToken, isLogistics, logisticsController.getPendingDeliveries)
+router.get("/logistics/get-counts", isJwtValidNB, decodeToken, isLogistics, logisticsController.getCounts)
+router.put("/logistics/login", bodyParser, isJSON, logisticsAuth.login)
+
+
+router.put('/logistics/update-password', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.updatePassword)
+router.put('/logistics/verify-update-otp', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.verifyUpdateOtp)
+router.put('/logistics/update-email', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.updateEmail)
+router.put('/logistics/update-username', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.updateUsername)
 module.exports = router

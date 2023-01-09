@@ -21,35 +21,41 @@ cartController.updateCart = ('/update-cart', async (req, res)=>{
             if(productObj){
                 //check if number of items added is < or = the stock
                 if(payload.noOfItems > 0 && payload.noOfItems <= parseInt(productObj.stock)){
+
+                    //check if product already exists in cart
+                    let doesProdExist = await database.findOne({owner: ObjectId(decodedToken.userID)}, database.collection.carts, ["products"], 1) 
+                    
+                    for(obj of doesProdExist.products){
+                        if(obj.productID.toString() == payload.productID){
+
+                            // send token
+                            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This product already exists in cart'}, true )
+                            return
+
+                        }
+                    }
+
                     //add product to cart uniqley
-                    const updatedCartInfo = await database.db.collection(database.collection.carts).updateOne({owner: ObjectId(decodedToken.userID)}, {$addToSet: {products: payload}})
+                    await database.db.collection(database.collection.carts).updateOne({owner: ObjectId(decodedToken.userID)}, {$addToSet: {products: payload}})
 
-                    //check if product was already present
-                    if(updatedCartInfo.modifiedCount === 1){
-                        //get cart object
-                        let cartObj = await database.db.collection(database.collection.carts).aggregate([
-                            {$match: {owner: ObjectId(decodedToken.userID)}}, 
-                            {$unwind: "$products"}, 
-                            {$lookup: {from: "products", localField: "products.productID", foreignField: "_id", as: "products.product"}},
-                            {$unset: "products.productID"},
-                            {$replaceWith: {
-                                $setField: {
-                                    field: "product",
-                                    input: "$products",
-                                    value: {$arrayElemAt: ["$products.product", 0]}
-                                }
-                            }}
-                        ]).toArray()
-
-                        //send response and token
-                        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj}, true )
-                        return
-                    }
-                    else{
-                        // send token
-                        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This product already exists in cart'}, true )
-                        return
-                    }
+                    //get cart data
+                    let cartObj = await database.db.collection(database.collection.carts).aggregate([
+                        {$match: {owner: ObjectId(decodedToken.userID)}}, 
+                        {$unwind: "$products"}, 
+                        {$lookup: {from: "products", localField: "products.productID", foreignField: "_id", as: "products.product"}},
+                        {$unset: "products.productID"},
+                        {$replaceWith: {
+                            $setField: {
+                                field: "product",
+                                input: "$products",
+                                value: {$arrayElemAt: ["$products.product", 0]}
+                            }
+                        }}
+                    ]).toArray()
+                    //send response and token
+                    utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, cartData: cartObj}, true )
+                    return
+                    
                 }
                 else{
                     // send token
