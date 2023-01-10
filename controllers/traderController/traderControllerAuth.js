@@ -89,7 +89,7 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
         const savedTrader = await trader.save()
 
         //add part of trader data to user collection
-        await new User({firstName: rest.firstName, lastName: rest.lastName, username: rest.username, accountType: "trader", primaryID: savedTrader.insertedId}).save()
+        await new User({firstName: rest.firstName, lastName: rest.lastName, username: rest.username, phoneNumber: rest.phoneNumber, email: rest.email, accountType: "trader", primaryID: savedTrader.insertedId}).save()
 
         //delete the data in pendingTraders collection
         await database.deleteOne({_id: pendingTraderObj._id}, database.collection.pendingTraders)

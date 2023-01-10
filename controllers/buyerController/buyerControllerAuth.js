@@ -98,7 +98,7 @@ buyerControllerAuth.verifyOtp = ('/signup/account-verification', async (req, res
         const savedBuyer = await buyer.save()
 
         //add part of buyers data to user collection
-        await new User({firstName: rest.firstName, lastName: rest.lastName, username: rest.username, accountType: "buyer", primaryID: savedBuyer.insertedId}).save()
+        await new User({firstName: rest.firstName, lastName: rest.lastName, username: rest.username, phoneNumber: rest.phoneNumber, email: rest.email, accountType: "buyer", primaryID: savedBuyer.insertedId}).save()
 
         //delete the data in pendingBuyers collection
         await database.deleteOne({_id: pendingBuyerObj._id}, database.collection.pendingBuyers)
