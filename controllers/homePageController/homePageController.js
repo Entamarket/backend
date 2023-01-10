@@ -14,16 +14,19 @@ homePageController.home = ('/home-page', async (req, res)=>{
         const productCount = await database.db.collection('products').countDocuments()
         const limit = 21
 
-        if(page && page >= 0 && (page * limit < productCount)){
+        if(page >= 0 && (page * limit < productCount)){
             products = await database.db.collection('products').find().skip(page * limit).limit(limit).toArray()
         }
-        else if(page && page >= 0 && (page * limit >= productCount)){
-            products = await database.db.collection('products').find().skip((page * limit) % productCount).limit(limit).toArray()
-        }
         else{
-            products = await database.db.collection('products').find().limit(limit).toArray() 
-
+            utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more products"}, true)
         }
+        // else if(page && page >= 0 && (page * limit >= productCount)){
+        //     products = await database.db.collection('products').find().skip((page * limit) % productCount).limit(limit).toArray()
+        // }
+        // else{
+        //     products = await database.db.collection('products').find().limit(limit).toArray() 
+
+        // }
 
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, products: products}, true)
         
