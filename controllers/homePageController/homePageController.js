@@ -16,6 +16,7 @@ homePageController.home = ('/home-page', async (req, res)=>{
 
         if(page >= 0 && (page * limit < productCount)){
             products = await database.db.collection('products').find().skip(page * limit).limit(limit).toArray()
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, products: products}, true)
         }
         else{
             utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more products"}, true)
@@ -27,8 +28,6 @@ homePageController.home = ('/home-page', async (req, res)=>{
         //     products = await database.db.collection('products').find().limit(limit).toArray() 
 
         // }
-
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, products: products}, true)
         
     }
     catch(err){
