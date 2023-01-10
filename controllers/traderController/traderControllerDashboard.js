@@ -346,7 +346,7 @@ traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>
     await fs.promises.rmdir(dir, {recursive: true})
     
     //delete all notifications to trader
-    await database.deleteMany({to: ObjectId(decodedToken.userID)}, database.collection.notifications)
+    await database.deleteMany({$or: [{to: ObjectId(decodedToken.userID)}, {from: ObjectId(decodedToken.userID)}]}, database.collection.notifications)
     //delete trader cart
     await database.deleteOne({owner: ObjectId(decodedToken.userID)}, database.collection.carts)
     //delete all comments
