@@ -76,16 +76,16 @@ router.get('/reaction/get-reactions', reactionController.getReactions)
 
 router.get('/home-page', homePageController.home)
 
-router.put('/cart/update-cart', bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, cartController.updateCart)
-router.get('/cart/get-cart', bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, cartController.getCart)
-router.delete('/cart/delete-cart-item', isJwtValidNB, decodeToken, isTokenIdValid, cartController.deleteCart)
+// router.put('/cart/update-cart', bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, cartController.updateCart)
+// router.get('/cart/get-cart', bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, cartController.getCart)
+// router.delete('/cart/delete-cart-item', isJwtValidNB, decodeToken, isTokenIdValid, cartController.deleteCart)
 
 router.get('/search', appController.search)
 
-router.get("/notification/get-more-notifications", isJwtValid, decodeToken, isTokenIdValid, notificationController.getMore)
+router.get("/notification/get-more-notifications", isJwtValid, decodeToken, isTokenIdValid, isJSON, notificationController.getMore)
 router.get("/notification/get-product-via-notification", isJwtValidNB, decodeToken, isTokenIdValid, notificationController.getProductViaNotification)
 
-router.get("/checkout/get-checkout", isJwtValidNB, decodeToken, isTokenIdValid, checkoutController.getCheckout)
+router.put("/checkout/checkout", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, checkoutController.checkout)
 
 router.delete("/delivery/confirm-delivery", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.confirmDelivery)
 router.get("/delivery/get-pending-deliveries", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getPendingDeliveries)

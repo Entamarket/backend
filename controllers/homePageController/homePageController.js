@@ -12,10 +12,13 @@ homePageController.home = ('/home-page', async (req, res)=>{
     try{
         page = parseInt(page)
         const productCount = await database.db.collection('products').countDocuments()
-        const limit = 20
+        const limit = 21
 
         if(page && page >= 0 && (page * limit < productCount)){
             products = await database.db.collection('products').find().skip(page * limit).limit(limit).toArray()
+        }
+        else if(page && page >= 0 && (page * limit >= productCount)){
+            products = await database.db.collection('products').find().skip((page * limit) % productCount).limit(limit).toArray()
         }
         else{
             products = await database.db.collection('products').find().limit(limit).toArray() 
