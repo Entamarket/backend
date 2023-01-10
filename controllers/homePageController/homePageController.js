@@ -6,21 +6,21 @@ const homePageController = {}
 
 
 homePageController.home = ('/home-page', async (req, res)=>{
-    let page = req.query.page
+    //let page = req.query.page
     let products;
     
     try{
-        page = parseInt(page)
+       // page = parseInt(page)
         const productCount = await database.db.collection('products').countDocuments()
         const limit = 21
 
-        if(page >= 0 && (page * limit < productCount)){
-            products = await database.db.collection('products').find().skip(page * limit).limit(limit).toArray()
+        //if(page >= 0 && (page * limit < productCount)){
+            products = await database.db.collection('products').find().toArray()
            return  utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, products: products}, true)
-        }
-        else{
-           return  utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more products"}, true)
-        }
+       // }
+        // else{
+        //    return  utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more products"}, true)
+        // }
         // else if(page && page >= 0 && (page * limit >= productCount)){
         //     products = await database.db.collection('products').find().skip((page * limit) % productCount).limit(limit).toArray()
         // }
