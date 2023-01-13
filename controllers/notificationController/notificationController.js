@@ -2,6 +2,7 @@ const {ObjectId}  = require('mongodb')
 const database = require("../../lib/database")
 
 const Notification = require("../../models/notification")
+const AdminNotification = require("../../models/adminNotification")
 const utilities = require("../../lib/utilities")
 
 const notificationController = {}
@@ -31,6 +32,25 @@ notificationController.send = (type, notificationObj, from, to)=>{
             }
             
             const savedNotification = await new Notification(notificationObj).save()
+            return resolve(savedNotification)
+        }
+        catch(err){
+            throw err
+
+        }
+    })  
+}
+
+
+notificationController.sendToAdmin = (type, notificationObj, from, to)=>{
+    return new Promise(async(resolve)=>{
+        try{
+            
+            notificationObj.type = type
+            notificationObj.from = from
+            notificationObj.to = to
+            
+            const savedNotification = await new AdminNotification(notificationObj).save()
             return resolve(savedNotification)
         }
         catch(err){

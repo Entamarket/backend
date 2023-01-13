@@ -18,7 +18,7 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
         const payload = JSON.parse(req.body)
 
         //Check if data in body is valid
-        if(utilities.validator(payload, ["name", "category"]).isValid){
+        if(utilities.createShopValidator(payload, ["name", "shopAddress"]).isValid){
 
             //add shop owner details to payload
             payload.owner = ObjectId(decodedToken.userID)

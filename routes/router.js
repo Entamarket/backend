@@ -37,6 +37,8 @@ router.put('/trader/dashboard/verify-update-otp', bodyParser, isJwtValid, decode
 router.put('/trader/dashboard/update-password', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, traderControllerDashboard.updatePassword)
 router.delete('/pending-trader/delete', isJwtValid, decodeToken, isTokenIdValid, traderControllerAuth.deletePendingTraderAccount)
 router.put('/trader/get-new-password', bodyParser, isJSON, traderControllerAuth.getNewPassword)
+router.get("/trader/dashboard/request-withdrawal", isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.requestWithdrawal)
+router.put("/trader/dashboard/confirm-bank-details", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, traderControllerDashboard.confirmBankDetails)
 
 
 router.post('/buyer/signup', bodyParser, isJSON, buyerControllerAuth.signup)
@@ -99,15 +101,18 @@ router.put('/admin/update-password', bodyParser, isJwtValid, decodeToken, isAdmi
 router.put('/admin/verify-update-otp', bodyParser, isJwtValid, decodeToken, isAdmin, isJSON, adminAuth.verifyUpdateOtp)
 router.put('/admin/update-email', bodyParser, isJwtValid, decodeToken, isAdmin, isJSON, adminAuth.updateEmail)
 router.put('/admin/update-username', bodyParser, isJwtValid, decodeToken, isAdmin, isJSON, adminAuth.updateUsername)
+router.get("/admin/get-pending-withdrawals", isJwtValidNB, decodeToken, isAdmin, adminController.getPendingWithdrawals)
+router.get("/admin/get-notifications", isJwtValidNB, decodeToken, isAdmin, adminController.getNotifications)
+router.get("/admin/view-notification", isJwtValidNB, decodeToken, isAdmin, adminController.viewNotification)
+router.delete("/admin/confirm-withdrawal", isJwtValidNB, decodeToken, isAdmin, adminController.confirmWithdrawal)
 
 router.get("/logistics/get-single-pending-delivery", isJwtValidNB, decodeToken, isLogistics, logisticsController.getSinglependingDelivery)
 router.get("/logistics/get-pending-deliveries", isJwtValidNB, decodeToken, isLogistics, logisticsController.getPendingDeliveries)
 router.get("/logistics/get-counts", isJwtValidNB, decodeToken, isLogistics, logisticsController.getCounts)
 router.put("/logistics/login", bodyParser, isJSON, logisticsAuth.login)
-
-
 router.put('/logistics/update-password', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.updatePassword)
 router.put('/logistics/verify-update-otp', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.verifyUpdateOtp)
 router.put('/logistics/update-email', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.updateEmail)
 router.put('/logistics/update-username', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.updateUsername)
+
 module.exports = router

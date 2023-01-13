@@ -5,6 +5,7 @@ const {ObjectId}  = require('mongodb')
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const email = require('../../lib/email')
+const PendingWithdrawal = require("../../models/pendingWithdrawal")
 const notification = require("../notificationController/notificationController")
 
 const traderControllerDashboard = {}
@@ -367,6 +368,92 @@ traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>
     //create newToken
     const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})   
     utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+    return
+  }
+})
+
+traderControllerDashboard.requestWithdrawal = ('/request-withdrawal', async (req, res)=>{
+  //extract decoded token
+  const decodedToken = req.decodedToken
+  try{
+    //get trader object
+    const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ["bankDetails"], 1)
+
+    //check if bank details exist
+    if(traderObj.bankDetails){
+      //send bank details for confirmation
+      utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, bankDetails: traderObj.bankDetails}, true)
+      return
+
+    }
+    else{
+      utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "trader has no bank details"}, true)
+      return
+    }
+  }
+  catch(err){
+    console.log(err)    
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+    return
+  }
+})
+
+
+traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (req, res)=>{
+  //extract decoded token
+  const decodedToken = req.decodedToken
+  const payload = JSON.parse(req.body)
+  
+  try{
+    //validate payload
+    if(utilities.confirmBankDetailsValidator(payload, ["amount"]).isValid){
+      //get trader object
+      const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ["bankDetails", "accountBalance", "firstName", "lastName", "phoneNumber", "email"], 1)
+
+      //check if bank details exist
+      if(traderObj.bankDetails){
+        //check if account balance is less than or equal to amount to withdraw
+        if(traderObj.accountBalance > 0 && traderObj.accountBalance >= payload.amount){
+
+          // create admin notification Object
+          const notificationObj ={
+            amount: payload.amount,
+            bankDetails: traderObj.bankDetails
+          }
+          //send notification to admin
+          await notification.sendToAdmin("withdrawal", notificationObj, ObjectId(decodedToken.userID), "admin")
+
+          //send data to pending withdrawal collection
+          const trader = {...traderObj}
+          delete trader.bankDetails
+          const pendingWithdrawalObj = {...notificationObj, trader: trader}
+          delete pendingWithdrawalObj.bankDetails
+          await new PendingWithdrawal(pendingWithdrawalObj).save()
+
+          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "withdrawal request sent, you will recieve your money within 12 hours"}, true)
+          return
+        }
+        else{
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "insufficient balance"}, true)
+          return
+        }
+        
+      }
+      else{
+        utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "trader has no bank details"}, true)
+        return
+      }
+
+    }
+    else{
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, errorObj: utilities.confirmBankDetailsValidator(payload, ["amount"])}, true)
+      return
+    }
+    
+  }
+  catch(err){
+    console.log(err)    
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
     return
   }
 })

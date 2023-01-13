@@ -13,21 +13,18 @@ productController.addProduct = ('/add-product', async (req, res)=>{
     const newToken =  utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
     try{
         //check if the data is valid
-        if(utilities.validator(req.body, ['name', 'price', 'description', 'stock']).isValid){
-            
+        if(utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category"]).isValid){
+
             //add an array of image paths to the body of the product
             const imagePaths = []
             for(let image of req.files){
                 imagePaths.push(`https://www.entamarket-api.com/` + image.path)
             }
-
-            // get shop category
-            const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops, ['category'], 1)
             
             req.body.images = imagePaths
             req.body.owner = ObjectId(decodedToken.userID)
             req.body.shopID = ObjectId(shopID)
-            req.body.category = shopObj.category
+            
 
             //store the product
             const savedProduct = await new Product(req.body).save()
@@ -50,7 +47,8 @@ productController.addProduct = ('/add-product', async (req, res)=>{
             }
 
             //send new token
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid form data`, entamarketToken: newToken}, true)
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, errorObj: utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category"]), entamarketToken: newToken}, true)
+            return
             
         }
     }
