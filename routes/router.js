@@ -20,6 +20,7 @@ const adminController = require("../controllers/adminController/adminController"
 const adminAuth = require("../controllers/adminController/adminAuth")
 const logisticsController = require("../controllers/logisticsController/logisticsController")
 const logisticsAuth = require("../controllers/logisticsController/logisticsAuth")
+const customerSupportController = require("../controllers/customerSuportController/customerSuportController")
 const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader, isAdmin, isLogistics} = require('../lib/middleware')
 
 
@@ -84,7 +85,7 @@ router.get('/home-page', homePageController.home)
 
 router.get('/search', appController.search)
 
-router.get("/notification/get-more-notifications", isJwtValid, decodeToken, isTokenIdValid, isJSON, notificationController.getMore)
+router.get("/notification/get-more-notifications", isJwtValidNB, decodeToken, isTokenIdValid, isJSON, notificationController.getMore)
 router.get("/notification/get-product-via-notification", isJwtValidNB, decodeToken, isTokenIdValid, notificationController.getProductViaNotification)
 
 router.put("/checkout/checkout", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, checkoutController.checkout)
@@ -115,4 +116,8 @@ router.put('/logistics/verify-update-otp', bodyParser, isJwtValid, decodeToken, 
 router.put('/logistics/update-email', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.updateEmail)
 router.put('/logistics/update-username', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.updateUsername)
 
+router.post('/customer-support/send', bodyParser, isJwtValidNB, decodeToken, isJSON, customerSupportController.send)
+router.get('/customer-support/get-all', isJwtValidNB, decodeToken, isAdmin, customerSupportController.getAll)
+router.get('/customer-support/get-one', isJwtValidNB, decodeToken, isAdmin, customerSupportController.getOne)
+router.delete('/customer-support/close', isJwtValidNB, decodeToken, isAdmin, customerSupportController.close)
 module.exports = router

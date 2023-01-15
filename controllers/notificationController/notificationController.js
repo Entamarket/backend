@@ -88,7 +88,7 @@ notificationController.getMore = ('/get-more-notifications', async (req, res)=>{
     
     //extract decoded token
     const decodedToken = req.decodedToken;
-    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
+    
     let set = req.query.set
 
 
@@ -111,10 +111,10 @@ notificationController.getMore = ('/get-more-notifications', async (req, res)=>{
                 notifications[index].from = notifications[index].from[0]
             })
  
-            return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, notifications: notifications, entamarketToken: newToken}, true)
+            return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, notifications: notifications}, true)
         }
         else{
-            return utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more notifications", entamarketToken: newToken}, true) 
+            return utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more notifications"}, true) 
 
         }
 
@@ -124,7 +124,7 @@ notificationController.getMore = ('/get-more-notifications', async (req, res)=>{
     catch(err){
         console.log(err) 
         //send new Token   
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
         return
     }
 })
