@@ -90,7 +90,7 @@ shopController.updateShop = ('/update-shop', async (req, res)=>{
            
     try{
         //Check if data in body is valid
-        if(utilities.validator(payload, ["name", "category", "shopID"]).isValid){
+        if(utilities.validator(payload, ["name", "shopAddress", "shopID"]).isValid){
             //check if shop belongs to the trader
             const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops, ['owner', 'name', 'username'], 1)
             if(shopObj?.owner.toString() == decodedToken.userID){
