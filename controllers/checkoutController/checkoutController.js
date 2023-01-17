@@ -12,7 +12,6 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
     
     //extract decoded token
     const decodedToken = req.decodedToken;
-    const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
     const payload = JSON.parse(req.body)
     try{
         //check if payload is an array

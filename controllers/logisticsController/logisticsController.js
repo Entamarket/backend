@@ -102,4 +102,66 @@ logisticsController.getSinglependingDelivery = ('/get-single-pending-delivery', 
 })
 
 
+logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
+    //extract decoded token
+    const decodedToken = req.decodedToken;
+    //extract checkoutID
+    const checkoutID = ObjectId(req.query.checkoutID)
+    try{
+         
+        //Get the pendingDelivery object
+
+        let pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).aggregate([
+            {$match: {_id: checkoutID}},
+            {$unwind: "$purchases"},
+            {$lookup: {from: "products", localField: "purchases.product", foreignField: "_id", as: "purchases.product"}},
+            {$unwind: "$purchases.product"}
+        ]).toArray()
+
+
+        //check if delivery exists
+        if(pendingDelivery){
+            
+            
+            //credit every traders account balance
+            for(let delivery of pendingDelivery){
+                await database.db.collection(database.collection.traders).updateOne({_id: delivery.purchases.trader}, {$inc: {"accountBalance": parseInt(delivery.purchases.product.price) * delivery.purchases.quantity}})
+
+                //send traders delivery notification
+                const notificationObj = {
+                    checkoutID: delivery._id,
+                    trader: delivery.purchases.trader,
+                    buyer: ObjectId(decodedToken.userID),
+                    productID: delivery.purchases.product._id,
+                    quantity: delivery.purchases.quantity,
+                    moneyCredited: parseInt(delivery.purchases.product.price) * delivery.purchases.quantity 
+                }
+
+                await notificationController.send("delivery", notificationObj, notificationObj.buyer, notificationObj.trader)
+            }
+
+            //delete pending delivery
+            await database.deleteOne({_id: pendingDelivery[0]._id}, database.collection.pendingDeliveries)
+
+            //send response
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "confirmation sucessful"}, true)
+            return
+
+        }
+        else{
+            //response   
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this delivery does not exist"}, true)
+            return
+        }
+
+    }
+    catch(err){
+        console.log(err) 
+        //response   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+})
+
+
 module.exports = logisticsController
