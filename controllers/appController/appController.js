@@ -29,7 +29,7 @@ appController.search = ('search', async(req, res)=>{
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, element: result}, true )
         }
         else{
-           const result = await database.db.collection(database.collection.products).find({name:{$regex:`^${value}`, $options: 'i'}}).limit(5).toArray()
+           const result = await database.db.collection(database.collection.products).find({name:{$regex:`${value}`, $options: 'i'}}).limit(5).toArray()
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, element: result}, true )
         }
     }

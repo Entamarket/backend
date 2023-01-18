@@ -152,9 +152,15 @@ productController.getProduct = ('/get-product', async (req, res)=>{
     const productID = req.query.productID
     try{
         //check if product exists
-        const productObj = await database.findOne({_id: ObjectId(productID)}, database.collection.products)
+        let productObj = await database.db.collection(database.collection.products).aggregate([
+            {$match: {_id: ObjectId(productID)}},
+            {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}},
+            {$unwind: "$owner"}
+        ]).toArray()
+
 
         if(productObj){
+            productObj = productObj[0]
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, productData: productObj}, true)
 
         }
