@@ -86,7 +86,7 @@ router.get('/home-page', homePageController.home)
 
 router.get('/search', appController.search)
 
-router.get("/notification/get-more-notifications", isJwtValidNB, decodeToken, isTokenIdValid, isJSON, notificationController.getMore)
+router.get("/notification/get-more-notifications", isJwtValidNB, decodeToken, isTokenIdValid, notificationController.getMore)
 router.get("/notification/get-product-via-notification", isJwtValidNB, decodeToken, isTokenIdValid, notificationController.getProductViaNotification)
 
 router.put("/checkout/checkout", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, checkoutController.checkout)

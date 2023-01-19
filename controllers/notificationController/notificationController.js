@@ -67,13 +67,18 @@ notificationController.get = (userID)=>{
                 {$match: {to: userID}},
                 {$sort: {_id: -1}}, 
                 {$limit: 5},
-                {$lookup: {from: "users", localField: "from", foreignField: "primaryID", as: "from"}}
+               {$lookup: {from: "users", localField: "from", foreignField: "primaryID", as: "from"}},
+               {$unwind: "$from"}
                 
             ]).toArray()
 
-            notifications.forEach((notification, index)=>{
-                notifications[index].from = notification.from[0]
-            })
+            //const notifications = await database.db.collection(database.collection.notifications).find({to: userID}).toArray()
+
+            console.log(notifications)
+
+            // notifications.forEach((notification, index)=>{
+            //     notifications[index].from = notification.from[0]
+            // })
 
             return resolve(notifications)
         }

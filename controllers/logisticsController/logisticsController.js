@@ -122,7 +122,9 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
 
         //check if delivery exists
         if(pendingDelivery){
-            
+
+           console.log(pendingDelivery)
+            //return
             
             //credit every traders account balance
             for(let delivery of pendingDelivery){
@@ -132,15 +134,15 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
                 const notificationObj = {
                     checkoutID: delivery._id,
                     trader: delivery.purchases.trader,
-                    buyer: ObjectId(decodedToken.userID),
-                    productID: delivery.purchases.product._id,
+                    buyer: delivery.buyer,
+                    productID: delivery.purchases.product,
                     quantity: delivery.purchases.quantity,
                     moneyCredited: parseInt(delivery.purchases.product.price) * delivery.purchases.quantity 
                 }
 
                 await notificationController.send("delivery", notificationObj, notificationObj.buyer, notificationObj.trader)
             }
-
+            
             //delete pending delivery
             await database.deleteOne({_id: pendingDelivery[0]._id}, database.collection.pendingDeliveries)
 

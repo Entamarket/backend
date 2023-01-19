@@ -44,6 +44,7 @@ deliveryController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
 
                     await notificationController.send("delivery", notificationObj, notificationObj.buyer, notificationObj.trader)
                 }
+                
 
                 //delete pending delivery
                 await database.deleteOne({_id: pendingDelivery[0]._id}, database.collection.pendingDeliveries)

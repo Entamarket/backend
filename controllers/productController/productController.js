@@ -155,12 +155,16 @@ productController.getProduct = ('/get-product', async (req, res)=>{
         let productObj = await database.db.collection(database.collection.products).aggregate([
             {$match: {_id: ObjectId(productID)}},
             {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}},
-            {$unwind: "$owner"}
+            {$unwind: "$owner"},
+            {$lookup: {from: "shops", localField: "shopID", foreignField: "_id", as: "shop"}},
+            {$unwind: "$shop"}
         ]).toArray()
 
 
         if(productObj){
             productObj = productObj[0]
+            const shop = {name: productObj.shop.name, username: productObj.shop.username, shopAddress: productObj.shop.shopAddress}
+            productObj.shop = shop
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, productData: productObj}, true)
 
         }
