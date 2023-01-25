@@ -4,6 +4,7 @@ const {ObjectId}  = require('mongodb')
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const Trader = require('../../models/trader')
+const EmailDoc = require("../../models/emailDoc")
 const User = require("../../models/user")
 const email = require('../../lib/email')
 const Cart = require("../../models/cart")
@@ -37,7 +38,7 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
         const savedPendingTraderObj = await pendingTrader.save()
 
         //send an email to the trader for verification of phone number
-        await email.send('entamarketltd@gmail.com', payload.email, `hello ${payload.firstName} ${payload.lastName}, please verify your email with this OTP: ${payload.otp}`, payload.firstName)
+        await email.send('entamarketltd@gmail.com', payload.email, `hello ${payload.firstName} ${payload.lastName}, please verify your email with this OTP: ${payload.otp}`, "OTP Verification")
 
         //Send JWT
         //fetch the user ID from the database
@@ -90,6 +91,9 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
 
         //add part of trader data to user collection
         await new User({firstName: rest.firstName, lastName: rest.lastName, username: rest.username, phoneNumber: rest.phoneNumber, email: rest.email, accountType: "trader", primaryID: savedTrader.insertedId}).save()
+
+        //add trader to email list
+        await new EmailDoc({owner: savedTrader.insertedId}).save()
 
         //delete the data in pendingTraders collection
         await database.deleteOne({_id: pendingTraderObj._id}, database.collection.pendingTraders)
@@ -145,7 +149,7 @@ traderControllerAuth.resendOtp = ('/signup/resend-otp', async (req, res)=>{
     await database.updateOne({_id: pendingTraderObj._id}, database.collection.pendingTraders, {otp: newOtp})
       
     //send new OTP to email
-    await email.send('entamarketltd@gmail.com', pendingTraderObj.email, `hello ${pendingTraderObj.firstName} ${pendingTraderObj.lastName}, please verify your email with this OTP: ${newOtp}`, pendingTraderObj.firstName)
+    await email.send('entamarketltd@gmail.com', pendingTraderObj.email, `hello ${pendingTraderObj.firstName} ${pendingTraderObj.lastName}, please verify your email with this OTP: ${newOtp}`, "OTP Verification")
 
     pendingTraderObj._id = pendingTraderObj._id.toString()
 
@@ -239,7 +243,7 @@ traderControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
         await database.insertOne({userID: traderObj._id, createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'password', value: payload.newPassword}}, database.collection.pendingUsersUpdates)
 
         //send otp to trader email
-        await email.send('entamarketltd@gmail.com', payload.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, traderObj.firstName)
+        await email.send('entamarketltd@gmail.com', payload.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, "OTP Verification")
 
         //create a token and send
         const token = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})

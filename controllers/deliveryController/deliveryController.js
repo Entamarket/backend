@@ -164,4 +164,21 @@ deliveryController.getSinglependingDelivery = ('/get-single-pending-delivery', a
 })
 
 
+deliveryController.getTraderPendingDeliveries = ('/get-trader-pending-deliveries', async (req, res)=>{
+    const decodedToken = req.decodedToken
+    const traderID = ObjectId(decodedToken.userID)
+    let set = req.query.set
+    try{
+        //get all pending deliveries which contains product from the 
+
+    }
+    catch(err){
+        console.log(err) 
+        //response   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+})
+
+
 module.exports = deliveryController

@@ -161,6 +161,14 @@ traderControllerDashboard.updateEmail = ('/update-email', async (req, res)=>{
   let payload = JSON.parse(req.body)
 
   try{
+    
+    //check if email is in emailList
+    const emailDoc = await database.findOne({owner: ObjectId(decodedToken.userID)}, database.collection.emailList)
+    if(!emailDoc){
+      utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: `You need to subscribe to our email services to recieve OTP`, entamarketToken: newToken}, true )
+      return 
+    }
+
     //Check if the data sent is valid
     if(utilities.validator(payload, ['email', 'password']).isValid){
 
@@ -189,7 +197,7 @@ traderControllerDashboard.updateEmail = ('/update-email', async (req, res)=>{
           await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'email', value: payload.email}}, database.collection.pendingUsersUpdates)
         
           //send the new otp to the new email
-          await email.send('entamarketltd@gmail.com', payload.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, traderObj.firstName)
+          await email.subSend('entamarketltd@gmail.com', payload.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, "OTP Verification", decodedToken.userID)
 
           //send token
           utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
@@ -234,15 +242,15 @@ traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, re
     //check if payload is valid
     if(utilities.validator(payload, ['otp']).isValid){
       //extrract data from the pendingUsersUpdates collection
-      userObj = await database.findOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates, ['otp', 'dataToUpdate'], 1)
+      const userObj = await database.findOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates, ['otp', 'dataToUpdate'], 1)
  
       //check if payload otp matches the otp in the userObj collection
       if(payload.otp === userObj.otp){
         //update the data of the trader
         await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
         //update user data
-        if([userObj.dataToUpdate.parameter] === "phoneNumber" || [userObj.dataToUpdate.parameter] === "email"){
-          await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.users, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
+        if(userObj.dataToUpdate.parameter === "phoneNumber" || userObj.dataToUpdate.parameter === "email"){
+          await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value}) 
         }
 
         //delete user from pendingUsersUpdates collection
@@ -273,13 +281,22 @@ traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, re
 })
 
 traderControllerDashboard.updatePassword = ('/update-password', async (req, res)=>{
+
   //get the decoded token
   const decodedToken = req.decodedToken
   //create token 
   const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
   let payload = JSON.parse(req.body)
 
+  
   try{
+    //check if email is in emailList
+    const emailDoc = await database.findOne({owner: ObjectId(decodedToken.userID)}, database.collection.emailList)
+    if(!emailDoc){
+      utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: `You need to subscribe to our email services to recieve OTP`, entamarketToken: newToken}, true )
+      return 
+    }
+
     //Check if the data sent is valid
     if(utilities.validator(payload, ['oldPassword', 'newPassword']).isValid){
 
@@ -305,7 +322,7 @@ traderControllerDashboard.updatePassword = ('/update-password', async (req, res)
         await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'password', value: payload.newPassword}}, database.collection.pendingUsersUpdates)
 
         //sent new otp to email
-        await email.send('entamarketltd@gmail.com', traderObj.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, traderObj.firstName)
+        await email.subSend('entamarketltd@gmail.com', traderObj.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, "OTP Verification", decodedToken.userID)
 
         //send token
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
@@ -356,6 +373,8 @@ traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>
     await database.deleteMany({owner: ObjectId(decodedToken.userID)}, database.collection.reactions)
     //delete the account from users collection
     await database.deleteOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
+    //delete account from mail list
+    await database.deleteOne({owner: ObjectId(decodedToken.userID)}, database.collection.emailList)
     //delete the account from traders collection
     await database.deleteOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders)
 

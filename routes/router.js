@@ -22,6 +22,7 @@ const adminAuth = require("../controllers/adminController/adminAuth")
 const logisticsController = require("../controllers/logisticsController/logisticsController")
 const logisticsAuth = require("../controllers/logisticsController/logisticsAuth")
 const customerSupportController = require("../controllers/customerSuportController/customerSuportController")
+const emailSubscriptionController = require("../controllers/emailSubscriptionController/emailSubscriptionController")
 const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader, isAdmin, isLogistics} = require('../lib/middleware')
 
 
@@ -123,4 +124,7 @@ router.post('/customer-support/send', bodyParser, isJwtValidNB, decodeToken, isJ
 router.get('/customer-support/get-all', isJwtValidNB, decodeToken, isAdmin, customerSupportController.getAll)
 router.get('/customer-support/get-one', isJwtValidNB, decodeToken, isAdmin, customerSupportController.getOne)
 router.delete('/customer-support/close', isJwtValidNB, decodeToken, isAdmin, customerSupportController.close)
+
+router.get("/email-subscription/unsubscribe", emailSubscriptionController.unsubscribe)
+router.post("/email-subscription/subscribe", isJwtValidNB, decodeToken, isTokenIdValid, emailSubscriptionController.subscribe)
 module.exports = router

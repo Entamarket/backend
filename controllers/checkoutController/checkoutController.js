@@ -1,5 +1,6 @@
 const {ObjectId}  = require('mongodb')
 const database = require("../../lib/database")
+const PendingTraderDelivery = require("../../models/pendingTraderDelivery")
 
 const notificationController = require("../notificationController/notificationController")
 const PendingDelivery = require("../../models/pendingDelivery")
@@ -105,6 +106,9 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
             for(let item of traderspurchaseCopies){
                 
                 item.checkoutID = checkoutObj.insertedId
+
+                //save trader copy in trader pending delivery
+                await new PendingTraderDelivery(item).save()
                    
                 //send notification to traders
                 await notificationController.send("purchase", item, ObjectId(decodedToken.userID), item.trader)

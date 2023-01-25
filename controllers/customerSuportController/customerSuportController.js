@@ -31,8 +31,8 @@ customerSupportController.send = ('/send', async (req, res)=>{
             let admins = await database.db.collection(database.collection.admins).find().toArray()
 
             for(let i of admins){
-                console.log(i.email)
-                await email.send(payload.email, i.email, payload.message, payload.fullName)
+                
+                await email.send(payload.email, i.email, payload.message, "customer issue")
             }
             
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "success"}, true)
