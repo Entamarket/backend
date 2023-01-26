@@ -125,6 +125,6 @@ router.get('/customer-support/get-all', isJwtValidNB, decodeToken, isAdmin, cust
 router.get('/customer-support/get-one', isJwtValidNB, decodeToken, isAdmin, customerSupportController.getOne)
 router.delete('/customer-support/close', isJwtValidNB, decodeToken, isAdmin, customerSupportController.close)
 
-router.get("/email-subscription/unsubscribe", emailSubscriptionController.unsubscribe)
+router.delete("/email-subscription/unsubscribe", emailSubscriptionController.unsubscribe)
 router.post("/email-subscription/subscribe", isJwtValidNB, decodeToken, isTokenIdValid, emailSubscriptionController.subscribe)
 module.exports = router
