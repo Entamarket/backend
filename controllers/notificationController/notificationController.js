@@ -72,14 +72,6 @@ notificationController.get = (userID)=>{
                 
             ]).toArray()
 
-            //const notifications = await database.db.collection(database.collection.notifications).find({to: userID}).toArray()
-
-            console.log(notifications)
-
-            // notifications.forEach((notification, index)=>{
-            //     notifications[index].from = notification.from[0]
-            // })
-
             return resolve(notifications)
         }
         catch(err){

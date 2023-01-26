@@ -121,11 +121,8 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
 
 
         //check if delivery exists
-        if(pendingDelivery){
+        if(pendingDelivery && pendingDelivery.length > 0){
 
-           console.log(pendingDelivery)
-            //return
-            
             //credit every traders account balance
             for(let delivery of pendingDelivery){
                 await database.db.collection(database.collection.traders).updateOne({_id: delivery.purchases.trader}, {$inc: {"accountBalance": parseInt(delivery.purchases.product.price) * delivery.purchases.quantity}})

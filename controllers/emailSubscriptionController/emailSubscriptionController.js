@@ -21,10 +21,8 @@ emailSubscriptionController.unsubscribe = ('/unsubscribe', async (req, res)=>{
         ]).toArray()
         
 
-        if(emailDoc){
+        if(emailDoc && emailDoc.length > 0){
             emailDoc = emailDoc[0]
-            console.log(emailDoc)
-            console.log(email)
             
             //compare the emails
             if(emailDoc.owner.email == email){
@@ -62,11 +60,23 @@ emailSubscriptionController.subscribe = ('/subscribe', async (req, res)=>{
     const decodedToken = req.decodedToken
 
     try{
-        await new EmailDoc({owner: ObjectId(decodedToken.userID)}).save()
+        //check if user is already subscribed
+        const emailDoc = await database.findOne({owner: ObjectId(decodedToken.userID)}, database.collection.emailList)
 
-        //send response
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: `You have successfully subscribed to our email list`}, true )
-        return
+        if(!emailDoc){
+            await new EmailDoc({owner: ObjectId(decodedToken.userID)}).save()
+
+            //send response
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: `You have successfully subscribed to our email list`}, true )
+            return
+
+        }
+        else{
+            //send response
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `You are already subscribed to our email list`}, true )
+            return
+        }
+        
     }
     catch(err){
         console.log(err)
