@@ -7,7 +7,7 @@ const Trader = require('../../models/trader')
 const EmailDoc = require("../../models/emailDoc")
 const User = require("../../models/user")
 const email = require('../../lib/email')
-const Cart = require("../../models/cart")
+//const Cart = require("../../models/cart")
 
 
 const traderControllerAuth = {}
@@ -103,8 +103,8 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
         fs.mkdirSync(dir)
 
         //create cart
-        const cart = new Cart({owner: savedTrader.insertedId})
-        await cart.save()
+        //const cart = new Cart({owner: savedTrader.insertedId})
+        //await cart.save()
 
         //send a new token
         const newToken = utilities.jwt('sign', {userID: savedTrader.insertedId, tokenFor: "trader"})

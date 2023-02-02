@@ -11,6 +11,7 @@
   "author": "TradeSpace Ltd",
   "license": "ISC",
   "dependencies": {
+    "@sendgrid/mail": "^7.7.0",
     "aws-sdk": "^2.1162.0",
     "dotenv": "^16.0.1",
     "express": "^4.18.1",

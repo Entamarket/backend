@@ -7,7 +7,7 @@ const EmailDoc = require("../../models/emailDoc")
 const Buyer = require('../../models/buyer')
 const User = require("../../models/user")
 const email = require('../../lib/email')
-const Cart = require('../../models/cart')
+//const Cart = require('../../models/cart')
 
 
 const buyerControllerAuth = {}
@@ -112,8 +112,8 @@ buyerControllerAuth.verifyOtp = ('/signup/account-verification', async (req, res
         fs.mkdirSync(dir)
 
         //create cart
-        const cart = new Cart({owner: savedBuyer.insertedId})
-        await cart.save() 
+        //const cart = new Cart({owner: savedBuyer.insertedId})
+        //await cart.save() 
 
         //send a new token
         const newToken = utilities.jwt('sign', {userID: savedBuyer.insertedId, tokenFor: "buyer"})
