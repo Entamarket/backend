@@ -26,6 +26,15 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
       //hash the password
       payload.password = utilities.dataHasher(payload.password)
 
+      //Check if the user email phone number and password already exists in the pending traders collection
+      const overwritePendingTrader = await database.db.collection(database.collection.pendingTraders).findOne({$and: [
+        {email: payload.email}, {phoneNumber: payload.phoneNumber}, {password: payload.password}
+      ]})
+
+      if(overwritePendingTrader){
+        await database.deleteOne({_id: overwritePendingTrader._id}, database.collection.pendingTraders)
+      }
+
       //check if username, email or phone number exists in database
       
       const existingUser = await database.checkForExistingUser(payload)
