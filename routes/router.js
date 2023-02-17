@@ -61,7 +61,7 @@ router.get("/user/get-user", isJwtValidNB, decodeToken, isTokenIdValid, userCont
 router.post('/shop/create-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, isTrader, shopController.createShop)
 router.put('/shop/update-shop', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, shopController.updateShop)
 router.delete('/shop/delete-shop', isJwtValid, decodeToken, isTokenIdValid, shopController.deleteShop)
-router.get('/shop/get-shop', isJwtValid, decodeToken, isTokenIdValid, shopController.getShop)
+router.get('/shop/get-shop', isJwtValidNB, decodeToken, isTokenIdValid, shopController.getShop)
 router.put('/shop/add-to-favourite-shops', bodyParser, isJwtValid, decodeToken, isTokenIdValid, shopController.addToFavouriteShops)
 router.delete('/shop/remove-from-favourite-shops', isJwtValid, decodeToken, isTokenIdValid, shopController.removeFromFavouriteShops)
 router.get('/shop/get-shop-unauth', shopController.getShopUnauth)
