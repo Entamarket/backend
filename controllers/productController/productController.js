@@ -79,6 +79,10 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
 
                 req.body.images = imagePaths
             }
+            else{
+                delete req.body.images
+            }
+
             //update product
             await database.updateOne({_id: ObjectId(req.query.productID)}, database.collection.products, req.body)
             //get updated product

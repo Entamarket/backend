@@ -47,7 +47,7 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
         const savedPendingTraderObj = await pendingTrader.save()
 
         //send an email to the trader for verification of phone number
-        await email.send('entamarketltd@gmail.com', payload.email, `hello ${payload.firstName} ${payload.lastName}, please verify your email with this OTP: ${payload.otp}`, "OTP Verification")
+        await email.sendOtp('entamarketltd@gmail.com', payload.email, "OTP Verification", `hello ${payload.firstName} ${payload.lastName}, please verify your email with this OTP:`, payload.otp)
 
         //Send JWT
         //fetch the user ID from the database
@@ -158,7 +158,7 @@ traderControllerAuth.resendOtp = ('/signup/resend-otp', async (req, res)=>{
     await database.updateOne({_id: pendingTraderObj._id}, database.collection.pendingTraders, {otp: newOtp})
       
     //send new OTP to email
-    await email.send('entamarketltd@gmail.com', pendingTraderObj.email, `hello ${pendingTraderObj.firstName} ${pendingTraderObj.lastName}, please verify your email with this OTP: ${newOtp}`, "OTP Verification")
+    await email.sendOtp('entamarketltd@gmail.com', pendingTraderObj.email, "OTP Verification", `hello ${pendingTraderObj.firstName} ${pendingTraderObj.lastName}, please verify your email with this OTP:`, newOtp)
 
     pendingTraderObj._id = pendingTraderObj._id.toString()
 
@@ -252,7 +252,7 @@ traderControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
         await database.insertOne({userID: traderObj._id, createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'password', value: payload.newPassword}}, database.collection.pendingUsersUpdates)
 
         //send otp to trader email
-        await email.send('entamarketltd@gmail.com', payload.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, "OTP Verification")
+        await email.sendOtp('entamarketltd@gmail.com', payload.email, "OTP Verification", `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP:`, newOtp)
 
         //create a token and send
         const token = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})

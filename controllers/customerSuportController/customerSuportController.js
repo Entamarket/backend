@@ -32,7 +32,7 @@ customerSupportController.send = ('/send', async (req, res)=>{
 
             for(let i of admins){
                 
-                await email.send(payload.email, i.email, payload.message, "customer issue")
+                await email.sendCustomerSupport(payload.email, i.email, "customer issue", payload.message)
             }
             
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "success"}, true)

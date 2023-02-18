@@ -45,7 +45,7 @@ buyerControllerAuth.signup = ('/signup', async (req, res)=>{
         const savedPendingBuyerObj = await pendingBuyer.save()
 
         //send an email to the trader for verification of phone number
-        await email.send('entamarketltd@gmail.com', payload.email, `hello ${payload.firstName} ${payload.lastName}, please verify your email with this OTP: ${payload.otp}`, "OTP Verification")
+        await email.sendOtp('entamarketltd@gmail.com', payload.email, "OTP Verification", `hello ${payload.firstName} ${payload.lastName}, please verify your email with this OTP:`, payload.otp)
 
         //Send JWT
         const token = utilities.jwt('sign', {userID: savedPendingBuyerObj.insertedId.toString(), tokenFor: "pendingBuyer"})
@@ -158,7 +158,7 @@ buyerControllerAuth.resendOtp = ('/signup/resend-otp', async (req, res)=>{
     await database.updateOne({_id: pendingBuyerObj._id}, database.collection.pendingBuyers, {otp: newOtp})
       
     //send new OTP to email
-    await email.send('entamarketltd@gmail.com', pendingBuyerObj.email, `hello ${pendingBuyerObj.firstName} ${pendingBuyerObj.lastName}, please verify your email with this OTP: ${newOtp}`, "OTP Verification")
+    await email.sendOtp('entamarketltd@gmail.com', pendingBuyerObj.email, "OTP Verification", `hello ${pendingBuyerObj.firstName} ${pendingBuyerObj.lastName}, please verify your email with this OTP:`, newOtp)
 
     pendingBuyerObj._id = pendingBuyerObj._id.toString()
 
@@ -252,7 +252,7 @@ buyerControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
         await database.insertOne({userID: buyerObj._id, createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'password', value: payload.newPassword}}, database.collection.pendingUsersUpdates)
 
         //send otp to buyer email
-        await email.send('entamarketltd@gmail.com', payload.email, `hello ${buyerObj.firstName} ${buyerObj.lastName}, please verify your email with this OTP: ${newOtp}`, "OTP Verification")
+        await email.sendOtp('entamarketltd@gmail.com', payload.email, "OTP Verification", `hello ${buyerObj.firstName} ${buyerObj.lastName}, please verify your email with this OTP:`,  newOtp)
 
         //create a token and send
         const token = utilities.jwt('sign', {userID: buyerObj._id, tokenFor: "buyer"})

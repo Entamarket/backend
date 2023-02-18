@@ -91,7 +91,7 @@ adminAuth.updatePassword = ('/update-password', async (req, res)=>{
         await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'password', value: payload.newPassword}}, database.collection.pendingUsersUpdates)
   
         //send new otp to email
-        await email.send('entamarketltd@gmail.com', adminObj.email, `hello ${adminObj.username}, please verify your email with this OTP: ${newOtp}`, "OTP Verification")
+        await email.sendOtp('entamarketltd@gmail.com', adminObj.email, "OTP Verification", `hello ${adminObj.username}, please verify your email with this OTP:`, newOtp)
   
         //send token
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
@@ -198,7 +198,7 @@ adminAuth.updateEmail = ('/update-email', async (req, res)=>{
         await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'email', value: payload.email}}, database.collection.pendingUsersUpdates)
           
         //send the new otp to the new email
-        await email.send('entamarketltd@gmail.com', payload.email, `hello ${adminObj.username}, please verify your email with this OTP: ${newOtp}`, "OTP Verification")
+        await email.sendOtp('entamarketltd@gmail.com', payload.email, "OTP Verification", `hello ${adminObj.username}, please verify your email with this OTP:`, newOtp)
   
         //send token
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
@@ -259,7 +259,7 @@ adminAuth.updateUsername = ('/update-username', async (req, res)=>{
         await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'username', value: payload.username}}, database.collection.pendingUsersUpdates)
           
         //send the new otp to the new email
-        await email.send('entamarketltd@gmail.com', adminObj.email, `hello ${adminObj.username}, please verify your email with this OTP: ${newOtp}`, "OTP Verification")
+        await email.sendOtp('entamarketltd@gmail.com', adminObj.email, "OTP Verification", `hello ${adminObj.username}, please verify your email with this OTP:`, newOtp)
   
         //send token
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
