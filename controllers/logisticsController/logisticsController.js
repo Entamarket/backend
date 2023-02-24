@@ -125,7 +125,7 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
 
             //credit every traders account balance
             for(let delivery of pendingDelivery){
-                await database.db.collection(database.collection.traders).updateOne({_id: delivery.purchases.trader}, {$inc: {"accountBalance": parseInt(delivery.purchases.product.price) * delivery.purchases.quantity}})
+                await database.db.collection(database.collection.traders).updateOne({_id: delivery.purchases.trader}, {$inc: {"accountBalance": delivery.purchases.product.price * delivery.purchases.quantity}})
 
                 //send traders delivery notification
                 const notificationObj = {
@@ -134,7 +134,7 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
                     buyer: delivery.buyer,
                     productID: delivery.purchases.product,
                     quantity: delivery.purchases.quantity,
-                    moneyCredited: parseInt(delivery.purchases.product.price) * delivery.purchases.quantity 
+                    moneyCredited: delivery.purchases.product.price * delivery.purchases.quantity 
                 }
 
                 await notificationController.send("delivery", notificationObj, notificationObj.buyer, notificationObj.trader)
@@ -161,6 +161,77 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
         utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
         return
     }
+})
+
+logisticsController.getNotifications = ("/get-notifications", async (req, res)=>{
+   
+    let set = req.query.set
+
+    try{
+        set = parseInt(set)
+        const notificationCount = await database.db.collection(database.collection.logisticsNotifications).countDocuments()
+        const limit = 5
+
+        if(set >= 0 && (set * limit < notificationCount)){
+            let notifications = await database.db.collection(database.collection.logisticsNotifications).aggregate([
+                {$match: {}},
+                {$sort: {_id: -1}},
+                {$skip: set * limit},
+                {$limit: limit},
+                {$lookup: {from: "users", localField: "from", foreignField: "primaryID", as: "from"}},
+                {$unwind: "$from"}
+                
+            ]).toArray()
+
+ 
+            return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, notifications: notifications}, true)
+        }
+        else{
+            return utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more notifications"}, true) 
+
+        }     
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+})
+
+
+logisticsController.viewNotification = ('/view-notification', async (req, res)=>{
+    
+    //extract payload from body
+    const notificationID = ObjectId(req.query.notificationID)
+
+    try{
+        //check if notification exist
+        let notificationObj = await database.db.collection(database.collection.logisticsNotifications).aggregate([
+            {$match: {_id: notificationID}},
+            {$limit: 1},
+            {$lookup: {from: "users", localField: "from", foreignField: "primaryID", as: "from"}},
+            {$unwind: "$from"}
+        ]).toArray()
+
+        if(notificationObj){
+            //change notification read recipt to true
+            await database.updateOne({_id: notificationObj._id}, database.collection.adminNotifications, {read: true})
+            return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, notification: notificationObj}, true)
+        }
+        else{
+           return utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this product does not exist"}, true)
+        }
+        
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+
+
 })
 
 

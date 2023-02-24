@@ -32,7 +32,7 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
 
                     if(productObj){
                         //check if the stock of this product is greater than or equal to the payload quantity
-                        if(product.quantity > 0 && product.quantity <= parseInt(productObj.stock)){
+                        if(product.quantity > 0 && product.quantity <= productObj.stock){
                             
 
                             //make a purchase object and fill it up
@@ -40,7 +40,7 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
                             purchase.product = productObj
                             purchase.quantity = product.quantity
                             purchase.trader = productObj.owner.primaryID
-                            purchase.purchasePrice = parseInt(productObj.price) * product.quantity
+                            purchase.purchasePrice = productObj.price * product.quantity
                             total += purchase.purchasePrice
                             purchases.push(purchase)
 

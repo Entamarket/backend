@@ -3,7 +3,9 @@ const database = require("../../lib/database")
 
 const Notification = require("../../models/notification")
 const AdminNotification = require("../../models/adminNotification")
+const logisticsNotification = require("../../models/logisticsNotification")
 const utilities = require("../../lib/utilities")
+const LogisticsNotification = require('../../models/logisticsNotification')
 
 const notificationController = {}
 
@@ -51,6 +53,24 @@ notificationController.sendToAdmin = (type, notificationObj, from, to)=>{
             notificationObj.to = to
             
             const savedNotification = await new AdminNotification(notificationObj).save()
+            return resolve(savedNotification)
+        }
+        catch(err){
+            throw err
+
+        }
+    })  
+}
+
+notificationController.sendToLogistics = (type, notificationObj, from, to)=>{
+    return new Promise(async(resolve)=>{
+        try{
+            
+            notificationObj.type = type
+            notificationObj.from = from
+            notificationObj.to = to
+            
+            const savedNotification = await new LogisticsNotification(notificationObj).save() //AdminNotification(notificationObj).save()
             return resolve(savedNotification)
         }
         catch(err){

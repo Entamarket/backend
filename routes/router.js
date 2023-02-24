@@ -118,6 +118,8 @@ router.put('/logistics/update-password', bodyParser, isJwtValid, decodeToken, is
 router.put('/logistics/verify-update-otp', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.verifyUpdateOtp)
 router.put('/logistics/update-email', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.updateEmail)
 router.put('/logistics/update-username', bodyParser, isJwtValid, decodeToken, isLogistics, isJSON, logisticsAuth.updateUsername)
+router.get("/logistics/get-notifications", isJwtValidNB, decodeToken, isLogistics, logisticsController.getNotifications)
+router.get("/logistics/view-notification", isJwtValidNB, decodeToken, isLogistics, logisticsController.viewNotification)
 router.delete('/logistics/confirm-delivery', isJwtValidNB, decodeToken, isLogistics, logisticsController.confirmDelivery)
 
 router.post('/customer-support/send', bodyParser, isJwtValidNB, decodeToken, isJSON, customerSupportController.send)

@@ -14,7 +14,6 @@ customerSupportController.send = ('/send', async (req, res)=>{
     //get payload
     const payload = JSON.parse(req.body)
     const userID = ObjectId(req.decodedToken.userID)
-    console.log(req.decodedToken)
     try{
         //validate payload
         if(utilities.costomerSupportValidator(payload, ["fullName", "email", "message"]).isValid){

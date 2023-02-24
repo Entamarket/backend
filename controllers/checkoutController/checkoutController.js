@@ -37,9 +37,9 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
 
                     if(productObj){
                         //check if the stock of this product is greater than or equal to the payload quantity
-                        if(product.quantity > 0 && product.quantity <= parseInt(productObj.stock)){
+                        if(product.quantity > 0 && product.quantity <= productObj.stock){
                             //update the stock of product
-                            let updatedProductStock = (parseInt(productObj.stock) - product.quantity) + ""
+                            let updatedProductStock = (productObj.stock - product.quantity) + ""
 
                             await database.updateOne({_id: productObj._id}, database.collection.products, {stock: updatedProductStock})
 
@@ -119,8 +119,7 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
             
             
             //send notification to logistics
-            const logisticsID = ObjectId("63bb57e030ecce63a6685040")
-            await notificationController.send("purchase-for-logistics", logisticsNotification, ObjectId(decodedToken.userID), logisticsID)
+            await notificationController.sendToLogistics("purchase", logisticsNotification, ObjectId(decodedToken.userID), "Logistics")
                 
             //add checkoutID to response
             const purchaseDetailsForResponse = {checkoutID: checkoutObj.insertedId, purchases: responsePurchases}

@@ -19,7 +19,7 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
     let payload = JSON.parse(req.body)
     
     //check if payload data is Valid
-    if(utilities.validator(payload, ['firstName', 'lastName', 'email', 'username', 'phoneNumber', 'password']).isValid){
+    if(utilities.signupValidator(payload, ['firstName', 'lastName', 'email', 'username', 'phoneNumber', 'password']).isValid){
       //remove all white spaces from user data if any
       payload = utilities.trimmer(payload)
 
@@ -64,7 +64,7 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
        
     }
     else{
-      const errorObj = utilities.validator(payload, ['firstName', 'lastName', 'email', 'username', 'phoneNumber', 'password'])
+      const errorObj = utilities.signupValidator(payload, ['firstName', 'lastName', 'email', 'username', 'phoneNumber', 'password'])
       errorObj.statusCode = 400
       utilities.setResponseData(res, 400, {'content-type': 'application/json'}, errorObj, true)
       return
