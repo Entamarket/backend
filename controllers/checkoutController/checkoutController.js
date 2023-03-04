@@ -37,9 +37,9 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
 
                     if(productObj){
                         //check if the stock of this product is greater than or equal to the payload quantity
-                        if(product.quantity > 0 && product.quantity <= productObj.stock){
+                        if(product.quantity > 0 && product.quantity <= parseInt(productObj.stock)){
                             //update the stock of product
-                            let updatedProductStock = (productObj.stock - product.quantity) + ""
+                            let updatedProductStock = (parseInt(productObj.stock) - product.quantity) + ""
 
                             await database.updateOne({_id: productObj._id}, database.collection.products, {stock: updatedProductStock})
 
