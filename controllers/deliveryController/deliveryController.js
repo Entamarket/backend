@@ -49,6 +49,9 @@ deliveryController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
                 //delete pending delivery
                 await database.deleteOne({_id: pendingDelivery[0]._id}, database.collection.pendingDeliveries)
 
+                //delete trader pending delivery
+                await database.deleteMany({checkoutID: checkoutID}, database.collection.pendingTradersDeliveries)
+
                 //send response
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "confirmation sucessful"}, true)
                 return
@@ -168,8 +171,32 @@ deliveryController.getTraderPendingDeliveries = ('/get-trader-pending-deliveries
     const decodedToken = req.decodedToken
     const traderID = ObjectId(decodedToken.userID)
     let set = req.query.set
+    let pendingTraderDeliveries;
     try{
-        //get all pending deliveries which contains product from the 
+
+        //get all delivery 5 at a time for now but later make it 20
+        set = parseInt(set)
+        const pendingTraderDeliveriesCount = await database.db.collection(database.collection.pendingTradersDeliveries).countDocuments({trader: traderID})
+        const limit = 5
+
+        if(typeof set === "number" && set >= 0 && (set * limit < pendingTraderDeliveriesCount)){
+            pendingTraderDeliveries = await database.db.collection(database.collection.pendingTradersDeliveries).find({trader: traderID}).skip(set * limit).limit(limit).toArray()
+
+            if(pendingTraderDeliveries.length > 0 ){
+                utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, pendingDeliveries: pendingTraderDeliveries}, true)
+                return
+            }
+            else{
+                //send response
+                utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more pending deliveries"}, true)
+                return
+            }
+        }
+        else{
+            //send response
+            utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: "no more pending deliveries"}, true)
+            return
+        }
 
     }
     catch(err){

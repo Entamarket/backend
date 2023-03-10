@@ -96,6 +96,8 @@ router.put("/purchase-calculator", bodyParser, isJwtValidNB, decodeToken, isToke
 router.delete("/delivery/confirm-delivery", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.confirmDelivery)
 router.get("/delivery/get-pending-deliveries", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getPendingDeliveries)
 router.get("/delivery/get-single-pending-delivery", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getSinglependingDelivery)
+router.get("/delivery/get-trader-pending-deliveries", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getTraderPendingDeliveries)
+router.get("/delivery/get-trader-single-pending-delivery", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getSingleTraderPendingDelivery)
 
 router.get("/admin/get-single-pending-delivery", isJwtValidNB, decodeToken, isAdmin, adminController.getSinglependingDelivery)
 router.get("/admin/get-pending-deliveries", isJwtValidNB, decodeToken, isAdmin, adminController.getPendingDeliveries)

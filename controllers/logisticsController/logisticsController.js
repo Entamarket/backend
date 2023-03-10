@@ -143,6 +143,9 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
             //delete pending delivery
             await database.deleteOne({_id: pendingDelivery[0]._id}, database.collection.pendingDeliveries)
 
+            //delete trader pending delivery
+            await database.deleteMany({checkoutID: checkoutID}, database.collection.pendingTradersDeliveries)
+
             //send response
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "confirmation sucessful"}, true)
             return
