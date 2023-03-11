@@ -210,7 +210,7 @@ deliveryController.getTraderPendingDeliveries = ('/get-trader-pending-deliveries
 
 
 
-deliveryController.getSingleTraderPendingDelivery = ('/get-trader-single-pending-delivery', async (req, res)=>{
+deliveryController.getSingleTraderPendingDelivery = ('/get-single-trader-pending-delivery', async (req, res)=>{
     const decodedToken = req.decodedToken
     const traderID = ObjectId(decodedToken.userID)
     const deliveryID = ObjectId(req.query.deliveryID)
@@ -219,9 +219,9 @@ deliveryController.getSingleTraderPendingDelivery = ('/get-trader-single-pending
         let pendingDelivery = await database.db.collection(database.collection.pendingTradersDeliveries).aggregate([
             {$match: {_id: deliveryID}},
             {$lookup: {from: "users", localField: "buyer", foreignField: "primaryID", as: "buyer"}},
-            {$unwind: "buyer"},
+            {$unwind: "$buyer"},
             {$lookup: {from: "products", localField: "product", foreignField: "_id", as: "product"}},
-            {$unwind: "product"}
+            {$unwind: "$product"}
 
         ]).toArray()
 
