@@ -208,4 +208,50 @@ deliveryController.getTraderPendingDeliveries = ('/get-trader-pending-deliveries
 })
 
 
+
+
+deliveryController.getSingleTraderPendingDelivery = ('/get-trader-single-pending-delivery', async (req, res)=>{
+    const decodedToken = req.decodedToken
+    const traderID = ObjectId(decodedToken.userID)
+    const deliveryID = ObjectId(req.query.deliveryID)
+
+    try{
+        let pendingDelivery = await database.db.collection(database.collection.pendingTradersDeliveries).aggregate([
+            {$match: {_id: deliveryID}},
+            {$lookup: {from: "users", localField: "buyer", foreignField: "primaryID", as: "buyer"}},
+            {$unwind: "buyer"},
+            {$lookup: {from: "products", localField: "product", foreignField: "_id", as: "product"}},
+            {$unwind: "product"}
+
+        ]).toArray()
+
+        pendingDelivery = pendingDelivery[0]
+        if(pendingDelivery){
+            
+            //check if trader owns this delivery
+            if(traderID.toString() === pendingDelivery.trader.toString()){
+                utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, pendingDelivery}, true)
+                return
+            }
+            else{
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "This buyer does not own this delivery"}, true)
+                return
+            }
+            
+        }
+        else{
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this delivery does not exist"}, true)
+            return
+        }   
+
+    }
+    catch(err){
+        console.log(err) 
+        //response   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+})
+
+
 module.exports = deliveryController
