@@ -11,7 +11,7 @@ const appController = require('../controllers/appController/appController')
 const commentController = require('../controllers/commentController/commentController')
 const reactionController = require('../controllers/reactionController/reactionController')
 const homePageController = require('../controllers/homePageController/homePageController')
-const cartController = require('../controllers/cartController/cartController')
+//const cartController = require('../controllers/cartController/cartController')
 const notificationController = require("../controllers/notificationController/notificationController")
 const userController = require("../controllers/userController/userController")
 const checkoutController = require("../controllers/checkoutController/checkoutController")
@@ -23,6 +23,7 @@ const logisticsController = require("../controllers/logisticsController/logistic
 const logisticsAuth = require("../controllers/logisticsController/logisticsAuth")
 const customerSupportController = require("../controllers/customerSuportController/customerSuportController")
 const emailSubscriptionController = require("../controllers/emailSubscriptionController/emailSubscriptionController")
+const soldProductsController = require("../controllers/soldProductsController/soldProductsController")
 const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader, isAdmin, isLogistics} = require('../lib/middleware')
 
 
@@ -98,6 +99,9 @@ router.get("/delivery/get-pending-deliveries", isJwtValidNB, decodeToken, isToke
 router.get("/delivery/get-single-pending-delivery", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getSinglependingDelivery)
 router.get("/delivery/get-trader-pending-deliveries", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getTraderPendingDeliveries)
 router.get("/delivery/get-single-trader-pending-delivery", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getSingleTraderPendingDelivery)
+
+router.get("/sold-products/get-sold-products", isJwtValidNB, decodeToken, isTokenIdValid, soldProductsController.getSoldProducts)
+router.get("/sold-products/get-single-sold-product", isJwtValidNB, decodeToken, isTokenIdValid, soldProductsController.getSingleSoldProduct)
 
 router.get("/admin/get-single-pending-delivery", isJwtValidNB, decodeToken, isAdmin, adminController.getSinglependingDelivery)
 router.get("/admin/get-pending-deliveries", isJwtValidNB, decodeToken, isAdmin, adminController.getPendingDeliveries)

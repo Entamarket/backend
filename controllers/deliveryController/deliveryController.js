@@ -2,6 +2,7 @@ const {ObjectId}  = require('mongodb')
 const database = require("../../lib/database")
 
 const notificationController = require("../notificationController/notificationController")
+const SoldProduct = require("../../models/soldProduct")
 const utilities = require("../../lib/utilities")
 
 const deliveryController = {}
@@ -43,6 +44,10 @@ deliveryController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
                     }
 
                     await notificationController.send("delivery", notificationObj, notificationObj.buyer, notificationObj.trader)
+
+                    //send products to sold products  collection
+                    const purchase = {product: delivery.purchases.product._id, buyer: ObjectId(decodedToken.userID), trader: delivery.purchases.trader, price: delivery.purchases.product.price, quantity: delivery.purchases.quantity}
+                    await new SoldProduct(purchase).save()
                 }
                 
 
@@ -234,13 +239,13 @@ deliveryController.getSingleTraderPendingDelivery = ('/get-single-trader-pending
                 return
             }
             else{
-                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "This buyer does not own this delivery"}, true)
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "This trader does not own this pending product"}, true)
                 return
             }
             
         }
         else{
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this delivery does not exist"}, true)
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this pending product delivery does not exist"}, true)
             return
         }   
 
