@@ -356,4 +356,36 @@ shopController.getShopUnauth = ('/get-shop-unauth', async (req, res)=>{
     
 })
 
+
+
+shopController.getShopProfile = ('/shop', async (req, res)=>{
+
+    try{
+        //extract shop username
+        const path = req.path;
+        const shopUsername = path.substring(6)
+
+        //get shop  
+        let shopObj = await database.db.collection(database.collection.shops).aggregate([
+            {$match: {username: shopUsername}},
+            {$lookup: {from: database.collection.users, localField: "owner", foreignField: "primaryID", as: "owner"}},
+            {$unwind: "$owner"}, 
+            {$lookup: {from: database.collection.products, localField: "products", foreignField: "_id", as: "products"}}
+        ]).toArray()
+
+        if(shopObj.length > 0){
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, shopData: shopObj[0]}, true)
+        }
+        else{
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "shop username does not exist"}, true)
+        }
+
+    }
+    catch(err){
+        console.log(err)   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+})
+
 module.exports = shopController

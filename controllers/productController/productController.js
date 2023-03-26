@@ -184,4 +184,30 @@ productController.getProduct = ('/get-product', async (req, res)=>{
     
 })
 
+
+
+productController.getAllTradersProducts = ('/get-all-traders-products', async (req, res)=>{
+    const decodedToken = req.decodedToken;
+    const traderID = ObjectId(decodedToken.userID)
+    try{
+
+        let products = await database.db.collection(database.collection.products).find({owner: traderID}).sort({_id: -1}).toArray()
+
+
+        if(products){
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, products}, true)
+
+        }
+        else{
+            utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 400, msg: "No products available"}, true) 
+        }
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+    }
+    
+})
+
 module.exports = productController;

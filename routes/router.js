@@ -66,18 +66,20 @@ router.get('/shop/get-shop', isJwtValidNB, decodeToken, isTokenIdValid, shopCont
 router.put('/shop/add-to-favourite-shops', bodyParser, isJwtValid, decodeToken, isTokenIdValid, shopController.addToFavouriteShops)
 router.delete('/shop/remove-from-favourite-shops', isJwtValid, decodeToken, isTokenIdValid, shopController.removeFromFavouriteShops)
 router.get('/shop/get-shop-unauth', shopController.getShopUnauth)
+router.get("/shop/:id/:id", shopController.getShopProfile)
 
 router.post('/product/add-product', isJwtValid, decodeToken, isTokenIdValid, uploads, productController.addProduct)
 router.put('/product/update-product', isJwtValid, decodeToken, isTokenIdValid, updateUploads, productController.updateProduct)
 router.delete('/product/delete-product', isJwtValid, decodeToken, isTokenIdValid, productController.deleteProduct)
 router.get('/product/get-product', productController.getProduct)
+router.get('/product/get-all-traders-products', isJwtValid, decodeToken, isTokenIdValid, productController.getAllTradersProducts)
 
-router.post('/comment/add-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, commentController.addComment)
+router.post('/comment/add-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, commentController.addComment)
 router.get('/comment/get-comments', commentController.getComments)
-router.put('/comment/update-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, commentController.updateComment)
+router.put('/comment/update-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, commentController.updateComment)
 router.delete('/comment/delete-comment', isJwtValid, decodeToken, isTokenIdValid, commentController.deleteComment)
 
-router.put('/reaction/update-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, uploads, reactionController.updateReaction)
+router.put('/reaction/update-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, reactionController.updateReaction)
 router.get('/reaction/get-reactions', reactionController.getReactions)
 
 router.get('/home-page', homePageController.home)
@@ -91,8 +93,8 @@ router.get('/search', appController.search)
 router.get("/notification/get-more-notifications", isJwtValidNB, decodeToken, isTokenIdValid, notificationController.getMore)
 router.get("/notification/get-product-via-notification", isJwtValidNB, decodeToken, isTokenIdValid, notificationController.getProductViaNotification)
 
-router.put("/checkout/checkout", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, checkoutController.checkout)
-router.put("/purchase-calculator", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, purchaseCalculatorController.calculatePurchase)
+router.put("/checkout/checkout", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, checkoutController.checkout)
+router.put("/purchase-calculator", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, purchaseCalculatorController.calculatePurchase)
 
 router.delete("/delivery/confirm-delivery", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.confirmDelivery)
 router.get("/delivery/get-pending-deliveries", isJwtValidNB, decodeToken, isTokenIdValid, deliveryController.getPendingDeliveries)
