@@ -72,7 +72,7 @@ router.post('/product/add-product', isJwtValid, decodeToken, isTokenIdValid, upl
 router.put('/product/update-product', isJwtValid, decodeToken, isTokenIdValid, updateUploads, productController.updateProduct)
 router.delete('/product/delete-product', isJwtValid, decodeToken, isTokenIdValid, productController.deleteProduct)
 router.get('/product/get-product', productController.getProduct)
-router.get('/product/get-all-traders-products', isJwtValid, decodeToken, isTokenIdValid, productController.getAllTradersProducts)
+router.get('/product/get-all-traders-products', isJwtValidNB, decodeToken, isTokenIdValid, productController.getAllTradersProducts)
 
 router.post('/comment/add-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, commentController.addComment)
 router.get('/comment/get-comments', commentController.getComments)
