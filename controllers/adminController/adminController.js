@@ -54,8 +54,6 @@ adminController.getSinglependingDelivery = ('/get-single-pending-delivery', asyn
     try{
         let pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).aggregate([
             {$match: {_id: checkoutID}},
-            {$lookup: {from: "users", localField: "buyer", foreignField: "primaryID", as: "buyer"}},
-            {$unwind: "$buyer"},
             {$unwind: "$purchases"},
             {$lookup: {from: "users", localField: "purchases.trader", foreignField: "primaryID", as: "purchases.trader"}},
             {$unwind: "$purchases.trader"},

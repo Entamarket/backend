@@ -223,8 +223,6 @@ deliveryController.getSingleTraderPendingDelivery = ('/get-single-trader-pending
     try{
         let pendingDelivery = await database.db.collection(database.collection.pendingTradersDeliveries).aggregate([
             {$match: {_id: deliveryID}},
-            {$lookup: {from: "users", localField: "buyer", foreignField: "primaryID", as: "buyer"}},
-            {$unwind: "$buyer"},
             {$lookup: {from: "products", localField: "product", foreignField: "_id", as: "product"}},
             {$unwind: "$product"}
 

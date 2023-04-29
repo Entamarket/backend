@@ -21,6 +21,8 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
             const responsePurchases = []
             const logisticsPurchases = []
             const traderspurchaseCopies = []
+            const buyerDetails = payload.pop()
+            buyerDetails.id = ObjectId(decodedToken.userID)
         
             //loop through the array and validate each product
             for(let product of payload){
@@ -71,6 +73,7 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
                             traderPurchaseCopy.product = productObj._id
                             traderPurchaseCopy.quantity = product.quantity
                             traderPurchaseCopy.buyer = ObjectId(decodedToken.userID)
+                            traderPurchaseCopy.buyerDetails = buyerDetails
                             traderPurchaseCopy.trader = productObj.owner.primaryID
                             traderspurchaseCopies.push(traderPurchaseCopy)
 
@@ -98,7 +101,7 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
             }
         
         
-            const purchaseDetails = {buyer: ObjectId(decodedToken.userID), purchases: purchases}
+            const purchaseDetails = {buyer: buyerDetails, purchases: purchases}
             //store in pending deliveries
             const checkoutObj = await new PendingDelivery(purchaseDetails).save()
 
@@ -115,7 +118,7 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
             }
 
             //add checkoutID and buyer to logistics notification
-            const logisticsNotification = {checkoutID: checkoutObj.insertedId, buyer: ObjectId(decodedToken.userID),  purchases: logisticsPurchases}
+            const logisticsNotification = {checkoutID: checkoutObj.insertedId, buyer: buyerDetails,  purchases: logisticsPurchases}
             
             
             //send notification to logistics
