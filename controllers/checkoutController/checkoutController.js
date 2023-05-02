@@ -73,7 +73,7 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
                             traderPurchaseCopy.product = productObj._id
                             traderPurchaseCopy.quantity = product.quantity
                             traderPurchaseCopy.buyer = ObjectId(decodedToken.userID)
-                            traderPurchaseCopy.buyerDetails = buyerDetails
+                            traderPurchaseCopy.buyer = buyerDetails
                             traderPurchaseCopy.trader = productObj.owner.primaryID
                             traderspurchaseCopies.push(traderPurchaseCopy)
 
