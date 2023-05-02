@@ -77,9 +77,7 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
                 logisticsFee = 2000;
             }
             else{
-                //send response   
-                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
-                return
+                logisticsFee = 0;
             }
 
             
