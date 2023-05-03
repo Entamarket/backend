@@ -93,12 +93,12 @@ deliveryController.getPendingDeliveries = ('/get-pending-deliveries', async (req
     try{
         //get all delivery 5 at a time for now but later make it 20
         set = parseInt(set)
-        const pendingDeliveryCount = await database.db.collection(database.collection.pendingDeliveries).countDocuments({buyer: buyerID})
+        const pendingDeliveryCount = await database.db.collection(database.collection.pendingDeliveries).countDocuments({"buyer.id": buyerID})
         const limit = 5
 
         if(typeof set === "number" && set >= 0 && (set * limit < pendingDeliveryCount)){
             pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).find({"buyer.id": buyerID}).skip(set * limit).limit(limit).toArray()
-
+        
             if(pendingDelivery.length > 0 ){
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, pendingDeliveries: pendingDelivery}, true)
                 return
