@@ -147,7 +147,7 @@ deliveryController.getSinglependingDelivery = ('/get-single-pending-delivery', a
         if(pendingDelivery){
             
             //check if buyer owns this delivery
-            if(buyerID.toString() === pendingDelivery.buyer.toString()){
+            if(buyerID.toString() === pendingDelivery.buyer.id.toString()){
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, pendingDelivery}, true)
                 return
             }
