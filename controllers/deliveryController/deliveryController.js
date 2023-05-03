@@ -97,7 +97,7 @@ deliveryController.getPendingDeliveries = ('/get-pending-deliveries', async (req
         const limit = 5
 
         if(typeof set === "number" && set >= 0 && (set * limit < pendingDeliveryCount)){
-            pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).find({buyer: buyerID}).skip(set * limit).limit(limit).toArray()
+            pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).find({"buyer.id": buyerID}).skip(set * limit).limit(limit).toArray()
 
             if(pendingDelivery.length > 0 ){
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, pendingDeliveries: pendingDelivery}, true)
