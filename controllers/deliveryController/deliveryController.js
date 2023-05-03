@@ -28,7 +28,7 @@ deliveryController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
         //check if delivery exists
         if(pendingDelivery){
             //check if user owns the delivery
-            if(pendingDelivery[0].buyer.toString() === decodedToken.userID){
+            if(pendingDelivery[0].buyer.id.toString() === decodedToken.userID){
                 //credit every traders account balance
                 for(let delivery of pendingDelivery){
                     await database.db.collection(database.collection.traders).updateOne({_id: delivery.purchases.trader}, {$inc: {"accountBalance": parseInt(delivery.purchases.product.price) * delivery.purchases.quantity}})
