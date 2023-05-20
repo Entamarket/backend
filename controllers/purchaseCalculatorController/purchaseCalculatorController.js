@@ -84,11 +84,11 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
             total += logisticsFee
             let paymentGatewayFee;
             if(total >= 126667){
-                paymentGatewayFee = 2000 
+                paymentGatewayFee = 3000 
             }
             else{
                 if(total >= 2500){
-                    paymentGatewayFee = parseFloat(((3/100) * total).toFixed(2)) + 100
+                    paymentGatewayFee = parseFloat(((3/100) * total).toFixed(2)) + 130
                 }
                 else{
                     paymentGatewayFee = parseFloat(((3/100) * total).toFixed(2))
