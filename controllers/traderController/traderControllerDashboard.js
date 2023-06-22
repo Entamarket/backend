@@ -433,6 +433,21 @@ traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (
       if(traderObj.bankDetails){
         //check if account balance is less than or equal to amount to withdraw
         if(traderObj.accountBalance > 0 && traderObj.accountBalance >= payload.amount){
+          //check if the user has a pending withdrawal and if the ammount in the pending withdrawal is more than his account balance
+          const pendingWithdrawals = await database.db.collection(database.collection.pendingWithdrawals).find({"trader._id": ObjectId(decodedToken.userID)}).toArray()
+           
+          if(pendingWithdrawals.length > 0){
+            let totalPendingWithdrawalAmount = 0
+            for(let i of pendingWithdrawals){
+              totalPendingWithdrawalAmount += i.amount
+            }
+            const availableBalance = traderObj.accountBalance - totalPendingWithdrawalAmount
+
+            if(availableBalance < payload.amount){
+              utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "insufficient available balance"}, true)
+              return
+            }
+          }
 
           // create admin notification Object
           const notificationObj ={
@@ -444,9 +459,13 @@ traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (
 
           //send data to pending withdrawal collection
           const trader = {...traderObj}
-          delete trader.bankDetails
+          //delete trader.bankDetails
+          delete notificationObj.bankDetails
           const pendingWithdrawalObj = {...notificationObj, trader: trader}
-          delete pendingWithdrawalObj.bankDetails
+          delete pendingWithdrawalObj.from
+          delete pendingWithdrawalObj.to
+          delete pendingWithdrawalObj.read
+          delete pendingWithdrawalObj.type
           await new PendingWithdrawal(pendingWithdrawalObj).save()
 
           utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "withdrawal request sent, you will recieve your money within 12 hours"}, true)
