@@ -101,7 +101,7 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
             }
 
             //send new token
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid form data`, entamarketToken: newToken}, true)
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category"]).msg, entamarketToken: newToken}, true)
         }
 
     }
