@@ -196,7 +196,8 @@ buyerControllerAuth.login = ('/login', async (req, res)=>{
       payload.password = utilities.dataHasher(payload.password)
 
       //Check if the ID exists in the database
-      const buyerObj = await database.findOne({$or: [{email: payload.id}, {phoneNumber: payload.id}]}, database.collection.buyers, ['_id', 'password'], 1)
+      const buyerObj = await database.findOne({$and: [{$or: [{email: payload.id}, {phoneNumber: payload.id}]}, {deleted : { $exists : false }}]},      database.collection.buyers, ['_id', 'password'], 1)
+
 
       if(buyerObj){
         buyerObj._id = buyerObj._id.toString()

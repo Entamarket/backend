@@ -16,13 +16,14 @@ buyerControllerDashboard.home = ('/dashboard', async (req, res)=>{
   const newToken =  utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
   
   try{
-    //extract trader object
+    //extract buyer object
     let buyerObj = await database.db.collection(database.collection.buyers).aggregate([
-      {$match: {_id: ObjectId(decodedToken.userID)}}, 
+      {$match: {$and:[{_id: ObjectId(decodedToken.userID)}, {deleted : { $exists : false }}]}}, 
       {$lookup: {from: database.collection.shops, localField: "favouriteShops", foreignField: "_id", as: "favouriteShops"}},
       {$project: {password: 0}}
     ]).toArray()
 
+    //{_id: ObjectId(decodedToken.userID)}
     buyerObj = buyerObj[0]
     if(buyerObj){
       buyerObj._id = buyerObj._id.toString()
@@ -301,13 +302,37 @@ buyerControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, res
 })
 
 
+
+buyerControllerDashboard.getPurchaseHistory = ('get-purchase-history', async (req, res)=>{
+  //get the decoded token
+  const decodedToken = req.decodedToken
+
+  try{
+    let set = parseInt(req.query.set)
+  
+    const limit = 20
+    //GET THE USER HISTORY
+    const purchaseHistory = await database.db.collection(database.collection.soldProducts).find({buyer: ObjectId(decodedToken.userID)}).skip(set * limit).limit(limit).sort({_id: -1}).toArray()
+
+    //SEND RESPONSE
+    utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, purchaseHistoryData: purchaseHistory}, true )
+   
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
+    return
+  }
+})
+
+
 buyerControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>{
   //extract decoded token
   const decodedToken = req.decodedToken
   try{
-    //delete trader multimedia folder
-    const dir = [__dirname, '..', '..', 'multimedia', 'buyers', decodedToken.userID.toString()].join(path.sep)
-    await fs.promises.rmdir(dir, {recursive: true})
+    //delete buyer multimedia folder
+    //const dir = [__dirname, '..', '..', 'multimedia', 'buyers', decodedToken.userID.toString()].join(path.sep)
+   // await fs.promises.rmdir(dir, {recursive: true})
 
     //delete all notifications to trader
     await database.deleteMany({$or: [{to: ObjectId(decodedToken.userID)}, {from: ObjectId(decodedToken.userID)}]}, database.collection.notifications)
@@ -318,11 +343,12 @@ buyerControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>{
     //delete all reactions
     await database.deleteMany({owner: ObjectId(decodedToken.userID)}, database.collection.reactions)
     //delete account from users collection
-    await database.deleteOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
+    await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, {deleted: true})
     //delete account from email list
     await database.deleteOne({owner: ObjectId(decodedToken.userID)}, database.collection.emailList)
     //delete account from buyers collection
-    await database.deleteOne({_id: ObjectId(decodedToken.userID)}, database.collection.buyers)
+    await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.buyers, {deleted: true})
+   
 
     //response
     utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "sucess"}, true)

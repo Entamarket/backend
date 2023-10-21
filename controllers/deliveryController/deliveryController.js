@@ -24,12 +24,13 @@ deliveryController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
             {$unwind: "$purchases.product"}
         ]).toArray()
 
-
+        
         //check if delivery exists
         if(pendingDelivery){
             //check if user owns the delivery
             if(pendingDelivery[0].buyer.id.toString() === decodedToken.userID){
                 //credit every traders account balance
+                //console.log(pendingDelivery)
                 for(let delivery of pendingDelivery){
                     await database.db.collection(database.collection.traders).updateOne({_id: delivery.purchases.trader}, {$inc: {"accountBalance": parseInt(delivery.purchases.product.price) * delivery.purchases.quantity}})
 
@@ -46,11 +47,10 @@ deliveryController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
                     await notificationController.send("delivery", notificationObj, notificationObj.buyer, notificationObj.trader)
 
                     //send products to sold products  collection
-                    const purchase = {product: delivery.purchases.product._id, buyer: ObjectId(decodedToken.userID), trader: delivery.purchases.trader, price: delivery.purchases.product.price, quantity: delivery.purchases.quantity}
+                    const purchase = {product: delivery.purchases.product, buyer: ObjectId(decodedToken.userID), trader: delivery.purchases.trader, price: delivery.purchases.product.price, quantity: delivery.purchases.quantity}
                     await new SoldProduct(purchase).save()
                 }
                 
-
                 //delete pending delivery
                 await database.deleteOne({_id: pendingDelivery[0]._id}, database.collection.pendingDeliveries)
 

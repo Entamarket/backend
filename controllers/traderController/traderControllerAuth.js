@@ -196,7 +196,7 @@ traderControllerAuth.login = ('/login', async (req, res)=>{
       trimmedLoginData.password = utilities.dataHasher(trimmedLoginData.password)
 
       //Check if the ID exists in the database
-      const traderObj = await database.findOne({$or: [{email: trimmedLoginData.id}, {phoneNumber: trimmedLoginData.id}]}, database.collection.traders, ['_id', 'password'], 1)
+      const traderObj = await database.findOne({$and: [{$or: [{email: trimmedLoginData.id}, {phoneNumber: trimmedLoginData.id}]}, {deleted : { $exists : false }}]}, database.collection.traders, ['_id', 'password'], 1)
 
       if(traderObj){
         traderObj._id = traderObj._id.toString()

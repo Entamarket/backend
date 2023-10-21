@@ -87,11 +87,11 @@ adminController.getCounts = ('/get-counts', async (req, res)=>{
     
     try{ 
         const pendingDeliveryCount = await database.db.collection(database.collection.pendingDeliveries).countDocuments()
-        const usersCount = await database.db.collection(database.collection.users).countDocuments()
-        const tradersCount = await database.db.collection(database.collection.traders).countDocuments()
-        const buyersCount = await database.db.collection(database.collection.buyers).countDocuments()
-        const shopsCount = await database.db.collection(database.collection.shops).countDocuments()
-        const productsCount = await database.db.collection(database.collection.products).countDocuments()
+        const usersCount = await database.db.collection(database.collection.users).countDocuments({deleted : { $exists : false }})
+        const tradersCount = await database.db.collection(database.collection.traders).countDocuments({deleted : { $exists : false }})
+        const buyersCount = await database.db.collection(database.collection.buyers).countDocuments({deleted : { $exists : false }})
+        const shopsCount = await database.db.collection(database.collection.shops).countDocuments({deleted : { $exists : false }})
+        const productsCount = await database.db.collection(database.collection.products).countDocuments({deleted : { $exists : false }})
 
         const countObj = {pendingDeliveryCount, usersCount, tradersCount, buyersCount, shopsCount, productsCount}
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, dataCount: countObj}, true)

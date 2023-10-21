@@ -92,7 +92,7 @@ shopController.updateShop = ('/update-shop', async (req, res)=>{
         //Check if data in body is valid
         if(utilities.validator(payload, ["name", "shopAddress", "shopID"]).isValid){
             //check if shop belongs to the trader
-            const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops, ['owner', 'name', 'username'], 1)
+            const shopObj = await database.findOne({$and: [{_id: ObjectId(shopID)}, {deleted : { $exists : false }}]}, database.collection.shops, ['owner', 'name', 'username'], 1)
             if(shopObj?.owner.toString() == decodedToken.userID){
                 
                 //check if shop name is similar to payload name
@@ -169,14 +169,14 @@ shopController.deleteShop = ('/delete-shop', async (req, res)=>{
 
             //delete all products in the shop
 
-            await database.deleteMany({shopID: ObjectId(shopID)}, database.collection.products)
+            await database.updateMany({shopID: ObjectId(shopID)}, database.collection.products, {deleted: true})
 
             //delete shop directory
-            await fs.promises.rmdir(path.join(__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID, `shop-${shopID}`), {recursive: true})
+           // await fs.promises.rmdir(path.join(__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID, `shop-${shopID}`), {recursive: true})
 
             
             //delete the shop
-            await database.deleteOne({_id: ObjectId(shopID)}, database.collection.shops)
+            await database.updateOne({_id: ObjectId(shopID)}, database.collection.shops, {deleted: true})
         
             //create newToken
             const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
@@ -211,7 +211,7 @@ shopController.getShop = ('/get-shop', async (req, res)=>{
         // get shop object
         //const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops)
         let shopObj = await database.db.collection(database.collection.shops).aggregate([
-            {$match: {_id: ObjectId(shopID)}}, 
+            {$match: {$and:[{_id: ObjectId(shopID)}, {deleted : { $exists : false }}]}}, 
             {$lookup: {from: database.collection.products, localField: "products", foreignField: "_id", as: "products"}}
         ]).toArray()
 
@@ -338,14 +338,14 @@ shopController.getShopUnauth = ('/get-shop-unauth', async (req, res)=>{
     const shopID = req.query.shopID
     try{
         //check if product exists
-        const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops)
+        const shopObj = await database.findOne({$and: [{_id: ObjectId(shopID)}, {deleted : { $exists : false }}]}, database.collection.shops)
 
         if(shopObj){
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, shopData: shopObj}, true)
 
         }
         else{
-            utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 400, msg: "this product id does not exist"}, true) 
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this shop does not exist"}, true) 
         }
     }
     catch(err){
@@ -367,7 +367,7 @@ shopController.getShopProfile = ('/shop', async (req, res)=>{
 
         //get shop  
         let shopObj = await database.db.collection(database.collection.shops).aggregate([
-            {$match: {username: shopUsername}},
+            {$match: {$and: [{username: shopUsername}, {deleted : { $exists : false }}]}},
             {$lookup: {from: database.collection.users, localField: "owner", foreignField: "primaryID", as: "owner"}},
             {$unwind: "$owner"}, 
             {$lookup: {from: database.collection.products, localField: "products", foreignField: "_id", as: "products"}}

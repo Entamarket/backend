@@ -12,7 +12,7 @@ appController.search = ('search', async(req, res)=>{
         if(element == 'shop'){
 
             const result = await database.db.collection(database.collection.shops).aggregate([
-                {$match: {username:{$regex:`^${value}`, $options: 'i'}}}, 
+                {$match: {$and: [{username:{$regex:`^${value}`, $options: 'i'}}, {deleted : { $exists : false }}]} }, 
                 {$project: {_id: 1, name: 1, username: 1}},
                 {$limit: 5}
             ]).toArray()
@@ -21,7 +21,7 @@ appController.search = ('search', async(req, res)=>{
         }
         else if(element == 'trader'){
             const result = await database.db.collection(database.collection.traders).aggregate([
-                {$match: {$or:[{username:{$regex:`^${value}`, $options: 'i'}}, {firstName:{$regex:`^${value}`, $options: 'i'}}]}}, 
+                {$match: {$and: [{$or:[{username:{$regex:`^${value}`, $options: 'i'}}, {firstName:{$regex:`^${value}`, $options: 'i'}}]}, {deleted : { $exists : false }}]}}, 
                 {$project: {_id: 1, firstName: 1, lastName: 1, username: 1}},
                 {$limit: 5}
             ]).toArray()
@@ -29,7 +29,7 @@ appController.search = ('search', async(req, res)=>{
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, element: result}, true )
         }
         else{
-           const result = await database.db.collection(database.collection.products).find({name:{$regex:`${value}`, $options: 'i'}}).limit(5).toArray()
+           const result = await database.db.collection(database.collection.products).find({$and: [{name:{$regex:`${value}`, $options: 'i'}}, {deleted : { $exists : false }}]}).limit(5).toArray()
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, element: result}, true )
         }
     }

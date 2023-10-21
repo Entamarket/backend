@@ -18,7 +18,7 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
   try{
     //extract trader object
     let traderObj = await database.db.collection(database.collection.traders).aggregate([
-      {$match: {_id: ObjectId(decodedToken.userID)}}, 
+      {$match: {$and:[{_id: ObjectId(decodedToken.userID)}, {deleted : { $exists : false }}]}}, 
       {$lookup: {from: database.collection.shops, localField: "shops", foreignField: "_id", as: "shops"}},
       {$project: {password: 0}}
     ]).toArray()
@@ -348,6 +348,30 @@ traderControllerDashboard.updatePassword = ('/update-password', async (req, res)
 
 })
 
+traderControllerDashboard.getSalesHistory = ('get-sales-history', async (req, res)=>{
+  //get the decoded token
+  const decodedToken = req.decodedToken
+
+  try{
+    let set = parseInt(req.query.set)
+  
+    const limit = 20
+    //GET THE SALES HISTORY
+    const salesHistory = await database.db.collection(database.collection.soldProducts).find({trader: ObjectId(decodedToken.userID)}).skip(set * limit).limit(limit).sort({_id: -1}).toArray()
+
+    //SEND RESPONSE
+    utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, salesHistoryData: salesHistory}, true )
+   
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
+    return
+  }
+
+
+})
+
 
 
 traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>{
@@ -355,13 +379,13 @@ traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>
   const decodedToken = req.decodedToken
   try{
     //delete all shops owned by the trader
-    await database.deleteMany({owner: ObjectId(decodedToken.userID)}, database.collection.shops)
+    await database.updateMany({owner: ObjectId(decodedToken.userID)}, database.collection.shops, {deleted: true})
 
     //delete all products owned by the trader
-    await database.deleteMany({owner: ObjectId(decodedToken.userID)}, database.collection.products)
+    await database.updateMany({owner: ObjectId(decodedToken.userID)}, database.collection.products, {deleted: true})
     //delete trader multimedia folder
-    const dir = [__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID.toString()].join(path.sep)
-    await fs.promises.rmdir(dir, {recursive: true})
+    //const dir = [__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID.toString()].join(path.sep)
+    //await fs.promises.rmdir(dir, {recursive: true})
     
     //delete all notifications to trader
     await database.deleteMany({$or: [{to: ObjectId(decodedToken.userID)}, {from: ObjectId(decodedToken.userID)}]}, database.collection.notifications)
@@ -372,11 +396,11 @@ traderControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>
     //delete all reactions
     await database.deleteMany({owner: ObjectId(decodedToken.userID)}, database.collection.reactions)
     //delete the account from users collection
-    await database.deleteOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
+    await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, {deleted: true})
     //delete account from mail list
     await database.deleteOne({owner: ObjectId(decodedToken.userID)}, database.collection.emailList)
     //delete the account from traders collection
-    await database.deleteOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders)
+    await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, {deleted: true})
 
     //response
     utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "sucess"}, true)

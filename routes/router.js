@@ -43,6 +43,7 @@ router.delete('/pending-trader/delete', isJwtValid, decodeToken, isTokenIdValid,
 router.put('/trader/get-new-password', bodyParser, isJSON, traderControllerAuth.getNewPassword)
 router.get("/trader/dashboard/request-withdrawal", isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.requestWithdrawal)
 router.put("/trader/dashboard/confirm-bank-details", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, traderControllerDashboard.confirmBankDetails)
+router.get('/trader/get-sales-history', isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.getSalesHistory)
 
 
 router.post('/buyer/signup', bodyParser, isJSON, buyerControllerAuth.signup)
@@ -55,6 +56,7 @@ router.put('/buyer/dashboard/update-profile', bodyParser, isJwtValid, decodeToke
 router.put('/buyer/dashboard/update-email', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.updateEmail)
 router.put('/buyer/dashboard/update-password', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.updatePassword)
 router.put('/buyer/dashboard/verify-update-otp', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.verifyUpdateOtp)
+router.get('/buyer/get-purchase-history', isJwtValidNB, decodeToken, isTokenIdValid, buyerControllerDashboard.getPurchaseHistory)
 router.delete('/buyer/dashboard/delete-account', isJwtValid, decodeToken, isTokenIdValid, buyerControllerDashboard.deleteAccount)
 
 router.get("/user/get-user", isJwtValidNB, decodeToken, isTokenIdValid, userController.getUser)

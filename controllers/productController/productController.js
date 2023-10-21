@@ -84,7 +84,7 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
             }
 
             //update product
-            await database.updateOne({_id: ObjectId(req.query.productID)}, database.collection.products, req.body)
+            await database.updateOne({$and:[{_id: ObjectId(req.query.productID)}, {deleted : { $exists : false }}]}, database.collection.products, req.body)
             //get updated product
             const updatedProduct = await database.findOne({_id: ObjectId(req.query.productID)}, database.collection.products)
 
@@ -128,13 +128,13 @@ productController.deleteProduct = ('/delete-product', async (req, res)=>{
             await database.db.collection(database.collection.shops).updateOne({_id: productObj.shopID}, {$pull:{products: productObj._id}})
 
             //remove product images from server
-            for(let image of productObj.images){
-                image = image.replace('https://www.entamarket-api.com/', '')
-                await fs.promises.unlink(path.join(__dirname, '..', '..', image))
-            }
+            // for(let image of productObj.images){
+            //     image = image.replace('https://www.entamarket-api.com/', '')
+            //     await fs.promises.unlink(path.join(__dirname, '..', '..', image))
+            // }
 
             //delete product from database
-            await database.deleteOne({_id: productObj._id}, database.collection.products)
+            await database.updateOne({_id: productObj._id}, database.collection.products, {deleted: true})
 
             //send new token
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true)
@@ -164,8 +164,7 @@ productController.getProduct = ('/get-product', async (req, res)=>{
             {$unwind: "$shop"}
         ]).toArray()
 
-
-        if(productObj){
+        if(!productObj[0]?.deleted){
             productObj = productObj[0]
             const shop = {name: productObj.shop.name, username: productObj.shop.username, shopAddress: productObj.shop.shopAddress}
             productObj.shop = shop
@@ -173,7 +172,7 @@ productController.getProduct = ('/get-product', async (req, res)=>{
 
         }
         else{
-            utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 400, msg: "this product id does not exist"}, true) 
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this product id does not exist"}, true) 
         }
     }
     catch(err){
@@ -191,7 +190,7 @@ productController.getAllTradersProducts = ('/get-all-traders-products', async (r
     const traderID = ObjectId(decodedToken.userID)
     try{
 
-        let products = await database.db.collection(database.collection.products).find({owner: traderID}).sort({_id: -1}).toArray()
+        let products = await database.db.collection(database.collection.products).find({$and:[{owner: traderID}, {deleted : { $exists : false }}]}).sort({_id: -1}).toArray()
 
 
         if(products){
