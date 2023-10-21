@@ -15,7 +15,7 @@ homePageController.home = ('/home-page', async (req, res)=>{
         // const limit = 21
 
         //if(page >= 0 && (page * limit < productCount)){
-            products = await database.db.collection('products').find().toArray()
+            products = await database.db.collection('products').find({deleted : { $exists : false }}).toArray()
            return  utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, products: products}, true)
        // }
         // else{
