@@ -17,8 +17,20 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
         //Extract payload from body
         const payload = JSON.parse(req.body)
 
+        //create newToken
+        const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
+
         //Check if data in body is valid
         if(utilities.createShopValidator(payload, ["name", "shopAddress"]).isValid){
+
+            //CHECK IF TRADER HAS VERIFIED DOCUMENTS
+            const verifiedDocs = await database.findOne({$and: [{owner: ObjectId(decodedToken.userID)}, {verified: true}]}, database.collection.traderVerificationDocs)
+            
+            
+            if(!verifiedDocs){
+                utilities.setResponseData(res, 401, {'content-type': 'application/json'}, {statusCode: 401, msg: `Please verify your account by uploading a picture of your ID card and utility bill`, entamarketToken: newToken}, true )
+                return
+            }
 
             //add shop owner details to payload
             payload.owner = ObjectId(decodedToken.userID)
@@ -44,14 +56,11 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
                 //get shop object
                 const shopObj = await database.findOne({_id: savedShop.insertedId}, database.collection.shops)
 
-                //create newToken
-                const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
 
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, shopData: shopObj, entamarketToken: newToken}, true )
             }
             else{
-                //create newToken
-                const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})
+               
                 utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `You have a shop with this name already, try giving your new shop a name you haven't given any other shop`, entamarketToken: newToken}, true )
                 return
             }

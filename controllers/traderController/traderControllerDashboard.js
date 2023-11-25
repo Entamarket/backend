@@ -1,5 +1,5 @@
-const fs = require('fs')
-const path = require('path')
+//const fs = require('fs')
+//const path = require('path')
 const {ObjectId}  = require('mongodb')
 
 const utilities = require('../../lib/utilities')
@@ -30,6 +30,16 @@ traderControllerDashboard.home = ('/dashboard', async (req, res)=>{
 
       //get notifications
       const notifications = await notification.get(traderObj._id)
+
+      //CHECK IF TRADE HAS VERIFIED DOCS
+      const verificationDocs = await database.findOne({owner: ObjectId(decodedToken.userID)}, database.collection.traderVerificationDocs)
+    
+      if(verificationDocs){
+        traderObj.confirmedTrader = verificationDocs.verified
+      }
+      else{
+        traderObj.confirmedTrader = null
+      }
 
       traderObj.notifications = notifications
   
@@ -368,8 +378,28 @@ traderControllerDashboard.getSalesHistory = ('get-sales-history', async (req, re
     utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
     return
   }
+})
 
 
+traderControllerDashboard.uploadVerificationDocs = ('upload-verification-docs', async (req, res)=>{
+  //get the decoded token
+  const decodedToken = req.decodedToken
+
+  try{
+    //Create document for verification data
+    const verificationData ={owner: ObjectId(decodedToken.userID), idCard: `https://www.entamarket-api.com/`+ req.files.idCard[0].path, utilityBill: `https://www.entamarket-api.com/` + req.files.utilityBill[0].path, verified: false}
+  
+    await database.insertOne(verificationData, database.collection.traderVerificationDocs)
+
+    //SEND RESPONSE
+    utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "success"}, true )
+   
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
+    return
+  }
 })
 
 

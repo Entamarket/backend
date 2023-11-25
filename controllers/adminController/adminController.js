@@ -1,7 +1,10 @@
+const fs = require('fs')
 const {ObjectId}  = require('mongodb')
 const database = require("../../lib/database")
-
+const path = require('path')
 const utilities = require("../../lib/utilities")
+const notificationController = require('../notificationController/notificationController')
+const email = require('../../lib/email')
 
 
 const adminController = {}
@@ -207,7 +210,7 @@ adminController.getNotifications = ("/get-notifications", async (req, res)=>{
 
 adminController.viewNotification = ('/view-notification', async (req, res)=>{
     
-    //extract payload from body
+    //extract payload from query
     const notificationID = ObjectId(req.query.notificationID)
 
     try{
@@ -227,6 +230,86 @@ adminController.viewNotification = ('/view-notification', async (req, res)=>{
         else{
            return utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this product does not exist"}, true)
         }
+        
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+
+
+})
+
+
+
+adminController.viewTraderVerificationDocs = ('/view-trader-verification-docs', async (req, res)=>{
+    
+    try{
+        //GET ALL UNVERIFIED TRDER DOCUMENTS
+        const unverifiedTraderDocs = await database.findMany({verified:false}, database.collection.traderVerificationDocs).toArray()
+
+        return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, unverifiedTraderDocs}, true)
+        
+    }
+    catch(err){
+        console.log(err) 
+        //send new Token   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+
+
+})
+
+
+adminController.TraderVerificationDocsVerdict = ('/trader-verification-docs-verdict', async (req, res)=>{
+    
+    try{
+        //extract payload from body
+        let payload = JSON.parse(req.body)
+        const userId = req.decodedToken.userID
+        
+        //CHECK IF DOCUMENTS WHERE APPROVED OR REJECTED
+        const traderVerificationDocs = await database.findOne({_id: ObjectId(payload.id)}, database.collection.traderVerificationDocs)
+            const trader =  await database.findOne({primaryID: traderVerificationDocs.owner}, database.collection.users)
+        if(payload.approved){
+            //UPDATE VERIFICATION STATUS
+            await database.updateOne({_id: ObjectId(payload.id)}, database.collection.traderVerificationDocs, {verified: true})
+
+            //SEND NOTIFICATION TO NOTIFY TRADER THAT VERIFICATION DOCS WERE APPROVED
+
+            notificationController.send("Verification Approval", {msg: `Dear ${trader.fistName} Your verification documents have been approved. you can now create shops`}, userId, trader.primaryID)
+
+            //SEND EMAIL ALSO TO NOTIFY TRADER
+            const msg = `Dear customer, the Entamarket team is pleased to inform you that your verification 
+            documents were approved and so you can now create shops. thanks for choosing Entamarket. ☺`
+
+            await email.sendToUsers("entamarketltd@gmail.com", trader.email, "Verification Verdict", msg)
+
+            return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "successfully verified"}, true)
+        }
+        else{
+            //SEND NOTIFICATION TO NOTIFY TRADER THAT VERIFICATION DOCS WERE Not APPROVED
+
+            notificationController.send("Verification Verdict", {msg: `Dear ${trader.fistName} Your verification documents were not approved. please make sure that the documents are in good shape and the pictures are clear`}, userId, trader.primaryID)
+
+            //SEND EMAIL ALSO TO NOTIFY TRADER
+            const msg = `Dear customer, your verification 
+            documents were not approved, please make sure you provide the required documents and the images are `
+            await email.sendToUsers("entamarketltd@gmail.com", trader.email, "Verification Verdict", msg)
+
+            //delete the idDocs folder
+            await fs.promises.rmdir(path.join(__dirname, '..', '..', 'multimedia', 'traders', traderVerificationDocs.owner.toString(), "idDocs"), {recursive: true})
+
+            //DELETE THE DOCUMENT/RECORD FROM DATABASE
+            await database.deleteOne({_id: traderVerificationDocs._id}, database.collection.traderVerificationDocs)
+            return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "successfully disaproved"}, true)
+
+        }
+
+        
         
     }
     catch(err){

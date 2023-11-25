@@ -24,7 +24,7 @@ const logisticsAuth = require("../controllers/logisticsController/logisticsAuth"
 const customerSupportController = require("../controllers/customerSuportController/customerSuportController")
 const emailSubscriptionController = require("../controllers/emailSubscriptionController/emailSubscriptionController")
 const soldProductsController = require("../controllers/soldProductsController/soldProductsController")
-const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader, isAdmin, isLogistics} = require('../lib/middleware')
+const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader, isAdmin, isLogistics, uploadTraderVerificationDocs} = require('../lib/middleware')
 
 
 router.use('/multimedia/traders', multimedia)
@@ -44,7 +44,7 @@ router.put('/trader/get-new-password', bodyParser, isJSON, traderControllerAuth.
 router.get("/trader/dashboard/request-withdrawal", isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.requestWithdrawal)
 router.put("/trader/dashboard/confirm-bank-details", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, traderControllerDashboard.confirmBankDetails)
 router.get('/trader/get-sales-history', isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.getSalesHistory)
-
+router.post('/trader/upload-verification-docs', isJwtValidNB, decodeToken, isTokenIdValid, uploadTraderVerificationDocs, traderControllerDashboard.uploadVerificationDocs)
 
 router.post('/buyer/signup', bodyParser, isJSON, buyerControllerAuth.signup)
 router.put('/buyer/signup/account-verification', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerAuth.verifyOtp)
@@ -107,6 +107,7 @@ router.get("/delivery/get-single-trader-pending-delivery", isJwtValidNB, decodeT
 router.get("/sold-products/get-sold-products", isJwtValidNB, decodeToken, isTokenIdValid, soldProductsController.getSoldProducts)
 router.get("/sold-products/get-single-sold-product", isJwtValidNB, decodeToken, isTokenIdValid, soldProductsController.getSingleSoldProduct)
 
+//ADMIN API
 router.get("/admin/get-single-pending-delivery", isJwtValidNB, decodeToken, isAdmin, adminController.getSinglependingDelivery)
 router.get("/admin/get-pending-deliveries", isJwtValidNB, decodeToken, isAdmin, adminController.getPendingDeliveries)
 router.get("/admin/get-counts", isJwtValidNB, decodeToken, isAdmin, adminController.getCounts)
@@ -119,7 +120,10 @@ router.get("/admin/get-pending-withdrawals", isJwtValidNB, decodeToken, isAdmin,
 router.get("/admin/get-notifications", isJwtValidNB, decodeToken, isAdmin, adminController.getNotifications)
 router.get("/admin/view-notification", isJwtValidNB, decodeToken, isAdmin, adminController.viewNotification)
 router.delete("/admin/confirm-withdrawal", isJwtValidNB, decodeToken, isAdmin, adminController.confirmWithdrawal)
+router.get("/admin/view-trader-verification-docs", isJwtValidNB, decodeToken, isAdmin, adminController.viewTraderVerificationDocs)
+router.put("/admin/trader-verification-docs-verdict", bodyParser, isJwtValidNB, decodeToken, isAdmin, isJSON, adminController.TraderVerificationDocsVerdict)
 
+//LOGISTICS API
 router.get("/logistics/get-single-pending-delivery", isJwtValidNB, decodeToken, isLogistics, logisticsController.getSinglependingDelivery)
 router.get("/logistics/get-pending-deliveries", isJwtValidNB, decodeToken, isLogistics, logisticsController.getPendingDeliveries)
 router.get("/logistics/get-counts", isJwtValidNB, decodeToken, isLogistics, logisticsController.getCounts)
