@@ -71,10 +71,10 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
             let logisticsFee;
 
             if(buyerDetails.location.toLowerCase() == "island"){
-                logisticsFee = 2500;
+                logisticsFee = 5000;
             }
             else if(buyerDetails.location.toLowerCase() == "mainland"){
-                logisticsFee = 2000;
+                logisticsFee = 2500;
             }
             else{
                 logisticsFee = 0;

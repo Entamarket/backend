@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const {ObjectId}  = require('mongodb')
+const pdfGenerator = require("../../lib/pdf")
 
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
@@ -324,6 +325,101 @@ buyerControllerDashboard.getPurchaseHistory = ('get-purchase-history', async (re
     return
   }
 })
+
+
+
+
+
+
+
+
+
+
+buyerControllerDashboard.getReceipt = ('get-receipt', async (req, res)=>{
+  
+  try{
+    //get the decoded token
+    const decodedToken = req.decodedToken
+    const purchaseId = req.query.id
+
+    //CHECK IF USER OWNS THIS PURCHSE
+    const purchase = await database.findOne({_id: ObjectId(purchaseId)}, database.collection.soldProducts)
+
+    if(decodedToken.userID == purchase.buyer.toString()){
+      const shopData = await database.findOne({_id: purchase.product.shopID}, database.collection.shops)
+      const trader = await database.findOne({primaryID: purchase.product.owner}, database.collection.users)
+      const buyer = await database.findOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
+      const receiptData = {
+        productName: purchase.product.name,
+        price: purchase.product.price,
+        quantity: purchase.quantity,
+        total: parseInt(purchase.product.price)* purchase.quantity,
+        shopAddress: shopData.shopAddress,
+        traderName: trader.firstName + " " + trader.lastName,
+        traderPhoneNumber: trader.phoneNumber,
+        buyerName: buyer.firstName + " " + buyer.lastName,
+        buyerPhoneNumber: buyer.phoneNumber,
+      }
+
+      const receiptContent = `
+        Product name: ${receiptData.productName}
+        Product price: N${purchase.product.price}
+        Quantity: ${purchase.quantity}
+        Total product price: N${parseInt(purchase.product.price)* purchase.quantity}
+        ShopAddress: ${shopData.shopAddress}
+        TraderName: ${trader.firstName + " " + trader.lastName}
+        TraderPhoneNumber: ${trader.phoneNumber}
+        BuyerName: ${buyer.firstName + " " + buyer.lastName}
+        BuyerPhoneNumber: ${buyer.phoneNumber}
+        Date: ${purchase.soldAt}
+      `
+
+      const stream = res.writeHead(200, {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment;filename=invoice.pdf`,
+      });
+
+      pdfGenerator((chunk)=> stream.write(chunk) , ()=> stream.end(),  receiptContent)
+      //utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: 'Success'}, true )
+      return
+
+
+    }
+    else{
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This purchase does not belong to user'}, true )
+      return
+    }
+    
+    
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
+    return
+  }
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 buyerControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>{
