@@ -328,13 +328,6 @@ buyerControllerDashboard.getPurchaseHistory = ('get-purchase-history', async (re
 
 
 
-
-
-
-
-
-
-
 buyerControllerDashboard.getReceipt = ('get-receipt', async (req, res)=>{
   
   try{
@@ -398,27 +391,6 @@ buyerControllerDashboard.getReceipt = ('get-receipt', async (req, res)=>{
     return
   }
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
