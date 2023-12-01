@@ -249,6 +249,7 @@ adminController.viewTraderVerificationDocs = ('/view-trader-verification-docs', 
     try{
         //GET ALL UNVERIFIED TRDER DOCUMENTS
         const unverifiedTraderDocs = await database.findMany({verified:false}, database.collection.traderVerificationDocs).toArray()
+        
 
         return utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, unverifiedTraderDocs}, true)
         

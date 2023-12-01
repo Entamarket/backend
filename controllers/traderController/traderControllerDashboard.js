@@ -388,6 +388,8 @@ traderControllerDashboard.uploadVerificationDocs = ('upload-verification-docs', 
   try{
     //Create document for verification data
     const verificationData ={owner: ObjectId(decodedToken.userID), idCard: `https://www.entamarket-api.com/`+ req.files.idCard[0].path, utilityBill: `https://www.entamarket-api.com/` + req.files.utilityBill[0].path, verified: false}
+    const traderData = await database.findOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
+    verificationData.traderData = traderData
   
     await database.insertOne(verificationData, database.collection.traderVerificationDocs)
 
