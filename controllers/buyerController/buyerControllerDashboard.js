@@ -344,10 +344,10 @@ buyerControllerDashboard.getReceipt = ('get-receipt', async (req, res)=>{
     
       for(let prod of purchase.products){
         const productData = {}
-        productData.productName = prod.product.lastName
+        productData.productName = prod.product.name
         productData.productPrice = prod.product.price
         productData.quantity = prod.quantity
-        productData.totalproductPrice = prod.totalProductPrice
+        productData.totalProductPrice = prod.totalProductPrice
         productData.shop = prod.shop
         productData.trader = prod.trader
 
