@@ -297,8 +297,10 @@ adminController.TraderVerificationDocsVerdict = ('/trader-verification-docs-verd
             notificationController.send("Verification Verdict", {msg: `Dear ${trader.fistName} Your verification documents were not approved. please make sure that the documents are in good shape and the pictures are clear`}, userId, trader.primaryID)
 
             //SEND EMAIL ALSO TO NOTIFY TRADER
-            const msg = `Dear customer, your verification 
-            documents were not approved, please make sure you provide the required documents and the images are `
+            const msg = `Dear customer, your verification documents were not approved. 
+            Please make sure you provide the required documents which are a picture of your ID card and a picture of any of your shop utility bill. 
+            Please make sure that these images and their contents are clear and visible. 
+            Thanks for choosing Entamarket.`
             await email.sendToUsers("entamarketltd@gmail.com", trader.email, "Verification Verdict", msg)
 
             //delete the idDocs folder

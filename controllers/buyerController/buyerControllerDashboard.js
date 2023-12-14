@@ -313,7 +313,7 @@ buyerControllerDashboard.getPurchaseHistory = ('get-purchase-history', async (re
   
     const limit = 20
     //GET THE USER HISTORY
-    const purchaseHistory = await database.db.collection(database.collection.soldProducts).find({buyer: ObjectId(decodedToken.userID)}).skip(set * limit).limit(limit).sort({_id: -1}).toArray()
+    const purchaseHistory = await database.db.collection(database.collection.boughtProducts).find({"buyer.id": ObjectId(decodedToken.userID)}).skip(set * limit).limit(limit).sort({_id: -1}).toArray()
 
     //SEND RESPONSE
     utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, purchaseHistoryData: purchaseHistory}, true )
@@ -334,46 +334,40 @@ buyerControllerDashboard.getReceipt = ('get-receipt', async (req, res)=>{
     //get the decoded token
     const decodedToken = req.decodedToken
     const purchaseId = req.query.id
-
+    
     //CHECK IF USER OWNS THIS PURCHSE
-    const purchase = await database.findOne({_id: ObjectId(purchaseId)}, database.collection.soldProducts)
+    const purchase = await database.findOne({_id: ObjectId(purchaseId)}, database.collection.boughtProducts)
+    
+    if(decodedToken.userID == purchase.buyer.id.toString()){
 
-    if(decodedToken.userID == purchase.buyer.toString()){
-      const shopData = await database.findOne({_id: purchase.product.shopID}, database.collection.shops)
-      const trader = await database.findOne({primaryID: purchase.product.owner}, database.collection.users)
-      const buyer = await database.findOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
-      const receiptData = {
-        productName: purchase.product.name,
-        price: purchase.product.price,
-        quantity: purchase.quantity,
-        total: parseInt(purchase.product.price)* purchase.quantity,
-        shopAddress: shopData.shopAddress,
-        traderName: trader.firstName + " " + trader.lastName,
-        traderPhoneNumber: trader.phoneNumber,
-        buyerName: buyer.firstName + " " + buyer.lastName,
-        buyerPhoneNumber: buyer.phoneNumber,
+      const receiptData = {checkoutID: purchase.checkoutID,  buyerName: `${purchase.buyer.firstName} ${purchase.buyer.lastName}`, products: []}
+    
+      for(let prod of purchase.products){
+        const productData = {}
+        productData.productName = prod.product.lastName
+        productData.productPrice = prod.product.price
+        productData.quantity = prod.quantity
+        productData.totalproductPrice = prod.totalProductPrice
+        productData.shop = prod.shop
+        productData.trader = prod.trader
+
+        receiptData.products.push(productData)
       }
 
-      const receiptContent = `
-        Product name: ${receiptData.productName}
-        Product price: N${purchase.product.price}
-        Quantity: ${purchase.quantity}
-        Total product price: N${parseInt(purchase.product.price)* purchase.quantity}
-        ShopAddress: ${shopData.shopAddress}
-        TraderName: ${trader.firstName + " " + trader.lastName}
-        TraderPhoneNumber: ${trader.phoneNumber}
-        BuyerName: ${buyer.firstName + " " + buyer.lastName}
-        BuyerPhoneNumber: ${buyer.phoneNumber}
-        Date: ${purchase.soldAt}
-      `
+      receiptData.totalProductsPrice = purchase.totalProductsPrice
+      receiptData.logisticsFee = purchase.logisticsFee
+      receiptData.paymentGatewayFee = purchase.paymentGatewayFee
+      receiptData.total = purchase.total
+      receiptData.date = purchase.date
 
+      
       const stream = res.writeHead(200, {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment;filename=invoice.pdf`,
       });
 
-      pdfGenerator((chunk)=> stream.write(chunk) , ()=> stream.end(),  receiptContent)
-      //utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: 'Success'}, true )
+      pdfGenerator((chunk)=> stream.write(chunk) , ()=> stream.end(),  receiptData)
+     
       return
 
 

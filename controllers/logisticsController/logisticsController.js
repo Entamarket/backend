@@ -1,7 +1,9 @@
 const {ObjectId}  = require('mongodb')
 const database = require("../../lib/database")
 const notificationController = require("../notificationController/notificationController")
-
+const {islandPrice, mainLandPrice, paymentGatewayMaxThreshold, paymentGatewayLv1Threshold, maxThresholdFee, lv0ThresholdFee, lv1ThresholdFee} = require("../../lib/variables")
+const SoldProduct = require("../../models/soldProduct")
+const BoughtProduct = require("../../models/boughtProduct")
 const utilities = require("../../lib/utilities")
 
 
@@ -111,7 +113,7 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
         //Get the pendingDelivery object
 
         let pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).aggregate([
-            {$match: {_id: checkoutID}},
+            {$match: {_id:  checkoutID}},
             {$unwind: "$purchases"},
             {$lookup: {from: "products", localField: "purchases.product", foreignField: "_id", as: "purchases.product"}},
             {$unwind: "$purchases.product"}
@@ -120,10 +122,13 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
 
         //check if delivery exists
         if(pendingDelivery && pendingDelivery.length > 0){
+            
+            const boughtProducts = {checkoutID: checkoutID, products: [], totalProductsPrice: 0}
 
             //credit every traders account balance
             for(let delivery of pendingDelivery){
-                await database.db.collection(database.collection.traders).updateOne({_id: delivery.purchases.trader}, {$inc: {"accountBalance": parseInt(delivery.purchases.product.price) * delivery.purchases.quantity}})
+                
+               await database.db.collection(database.collection.traders).updateOne({_id: delivery.purchases.trader}, {$inc: {"accountBalance": parseInt(delivery.purchases.product.price) * delivery.purchases.quantity}})
 
                 //send traders delivery notification
                 const notificationObj = {
@@ -136,7 +141,49 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
                 }
 
                 await notificationController.send("delivery", notificationObj, notificationObj.buyer, notificationObj.trader)
+
+                //send products to sold products  collection
+                const shopData = await database.findOne({_id: delivery.purchases.product.shopID}, database.collection.shops, ["name", "shopAddress"], 1)
+                const purchase = {checkoutID: checkoutID, product: delivery.purchases.product, shop: shopData, buyer: delivery.buyer, trader: delivery.purchases.trader, price: delivery.purchases.product.price, quantity: delivery.purchases.quantity}
+                await new SoldProduct(purchase).save()
+
+                //make bought product data
+                const traderData = await database.findOne({primaryID: delivery.purchases.trader}, database.collection.users, ["deleted"], 0)
+                boughtProducts.products.push({product: delivery.purchases.product,  trader: traderData, shop: shopData, price: delivery.purchases.product.price, quantity: delivery.purchases.quantity, totalProductPrice: delivery.purchases.quantity * parseInt(delivery.purchases.product.price)})
+                
             }
+            boughtProducts.buyer = pendingDelivery[0].buyer
+            //calculate total products price
+            for(let price of boughtProducts.products){
+                boughtProducts.totalProductsPrice += price.totalProductPrice
+            }
+            
+            if(boughtProducts.buyer.location.toLowerCase() == "island"){
+                boughtProducts.logisticsFee = islandPrice;
+            }
+            else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
+                boughtProducts.logisticsFee = mainLandPrice;
+            }
+            else{
+                boughtProducts.logisticsFee = 0;
+            }
+
+            boughtProducts.total = boughtProducts.totalProductsPrice + boughtProducts.logisticsFee
+
+            if(boughtProducts.total >= paymentGatewayMaxThreshold){
+                boughtProducts.paymentGatewayFee = maxThresholdFee 
+            }
+            else{
+                if(boughtProducts.total >= paymentGatewayLv1Threshold){
+                    boughtProducts.paymentGatewayFee = lv1ThresholdFee(boughtProducts.total)
+                }
+                else{
+                    boughtProducts.paymentGatewayFee = lv0ThresholdFee(boughtProducts.total)
+                }
+            }
+            boughtProducts.total += boughtProducts.paymentGatewayFee
+            await new BoughtProduct(boughtProducts).save()
+            
             
             //delete pending delivery
             await database.deleteOne({_id: pendingDelivery[0]._id}, database.collection.pendingDeliveries)

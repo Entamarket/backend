@@ -2,6 +2,7 @@ const {ObjectId}  = require('mongodb')
 const database = require("../../lib/database")
 
 const utilities = require("../../lib/utilities")
+const {islandPrice, mainLandPrice, paymentGatewayMaxThreshold, paymentGatewayLv1Threshold, maxThresholdFee, lv0ThresholdFee, lv1ThresholdFee} = require("../../lib/variables")
 
 const purchaseCalculatorController = {}
 
@@ -71,10 +72,10 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
             let logisticsFee;
 
             if(buyerDetails.location.toLowerCase() == "island"){
-                logisticsFee = 5000;
+                logisticsFee = islandPrice;
             }
             else if(buyerDetails.location.toLowerCase() == "mainland"){
-                logisticsFee = 2500;
+                logisticsFee = mainLandPrice;
             }
             else{
                 logisticsFee = 0;
@@ -83,15 +84,15 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
             
             total += logisticsFee
             let paymentGatewayFee;
-            if(total >= 126667){
-                paymentGatewayFee = 3000 
+            if(total >= paymentGatewayMaxThreshold){
+                paymentGatewayFee = maxThresholdFee 
             }
             else{
-                if(total >= 2500){
-                    paymentGatewayFee = parseFloat(((3/100) * total).toFixed(2)) + 130
+                if(total >= paymentGatewayLv1Threshold){
+                    paymentGatewayFee = lv1ThresholdFee(total)
                 }
                 else{
-                    paymentGatewayFee = parseFloat(((3/100) * total).toFixed(2))
+                    paymentGatewayFee = lv0ThresholdFee(total)
                 }
             }
             //let paymentGatewayFee = total >= 126667 ? 2000 :  parseFloat(((3/100) * total).toFixed(2))
