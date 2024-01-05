@@ -24,10 +24,11 @@ const logisticsAuth = require("../controllers/logisticsController/logisticsAuth"
 const customerSupportController = require("../controllers/customerSuportController/customerSuportController")
 const emailSubscriptionController = require("../controllers/emailSubscriptionController/emailSubscriptionController")
 const soldProductsController = require("../controllers/soldProductsController/soldProductsController")
-const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader, isAdmin, isLogistics, uploadTraderVerificationDocs} = require('../lib/middleware')
+const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader, isAdmin, isLogistics, uploadTraderVerificationDocs, getLogo} = require('../lib/middleware')
 
 
 router.use('/multimedia/traders', multimedia)
+router.get('/logo', getLogo)
 
 router.post('/trader/signup', bodyParser, isJSON, traderControllerAuth.signup)
 router.put('/trader/signup/account-verification', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, traderControllerAuth.verifyOtp)
