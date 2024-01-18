@@ -1,7 +1,7 @@
 const {ObjectId}  = require('mongodb')
 const database = require("../../lib/database")
 const notificationController = require("../notificationController/notificationController")
-const {islandPrice, mainLandPrice, paymentGatewayMaxThreshold, paymentGatewayLv1Threshold, maxThresholdFee, lv0ThresholdFee, lv1ThresholdFee} = require("../../lib/variables")
+const {islandPrice, mainLandPrice, paymentGatewayMaxThreshold, paymentGatewayLv1Threshold, maxThresholdFee, lv0ThresholdFee, lv1ThresholdFee, small, medium, large, xlFactor} = require("../../lib/variables")
 const SoldProduct = require("../../models/soldProduct")
 const BoughtProduct = require("../../models/boughtProduct")
 const utilities = require("../../lib/utilities")
@@ -124,7 +124,7 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
         if(pendingDelivery && pendingDelivery.length > 0){
             
             const boughtProducts = {checkoutID: checkoutID, products: [], totalProductsPrice: 0}
-
+            let weight = 0
             //credit every traders account balance
             for(let delivery of pendingDelivery){
                 
@@ -150,6 +150,9 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
                 //make bought product data
                 const traderData = await database.findOne({primaryID: delivery.purchases.trader}, database.collection.users, ["deleted"], 0)
                 boughtProducts.products.push({product: delivery.purchases.product,  trader: traderData, shop: shopData, price: delivery.purchases.product.price, quantity: delivery.purchases.quantity, totalProductPrice: delivery.purchases.quantity * parseInt(delivery.purchases.product.price)})
+
+                //add weigth
+                weight += parseFloat(delivery.purchases.product.weight) * delivery.purchases.quantity
                 
             }
             boughtProducts.buyer = pendingDelivery[0].buyer
@@ -158,14 +161,67 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
                 boughtProducts.totalProductsPrice += price.totalProductPrice
             }
             
-            if(boughtProducts.buyer.location.toLowerCase() == "island"){
-                boughtProducts.logisticsFee = islandPrice;
+            //Calculate logistics price
+
+            if(weight >= 0 && weight <=2){
+                if(boughtProducts.buyer.location.toLowerCase() == "island"){
+                    boughtProducts.logisticsFee = islandPrice + small;
+                }
+                else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
+                    boughtProducts.logisticsFee = mainLandPrice + small;
+                }
+                else{
+                    //send response   
+                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+                    return
+                }
             }
-            else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
-                boughtProducts.logisticsFee = mainLandPrice;
+
+            else if(weight >= 2.1 && weight <=7){
+                if(boughtProducts.buyer.location.toLowerCase() == "island"){
+                    boughtProducts.logisticsFee = islandPrice + medium;
+                }
+                else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
+                    boughtProducts.logisticsFee = mainLandPrice + medium;
+                }
+                else{
+                    //send response   
+                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+                    return
+                }
+            }
+
+            else if(weight >= 7.1 && weight <=10){
+                if(boughtProducts.buyer.location.toLowerCase() == "island"){
+                    boughtProducts.logisticsFee = islandPrice + large;
+                }
+                else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
+                    boughtProducts.logisticsFee = mainLandPrice + large;
+                }
+                else{
+                    //send response   
+                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+                    return
+                }
+            }
+
+            else if(weight > 10){
+                if(boughtProducts.buyer.location.toLowerCase() == "island"){
+                    boughtProducts.logisticsFee = islandPrice + large + (weight * xlFactor);
+                }
+                else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
+                    boughtProducts.logisticsFee = mainLandPrice + large + (weight * xlFactor);
+                }
+                else{
+                    //send response   
+                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+                    return
+                }
             }
             else{
-                boughtProducts.logisticsFee = 0;
+                //send response   
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid weight"}, true)
+                return
             }
 
             boughtProducts.total = boughtProducts.totalProductsPrice + boughtProducts.logisticsFee

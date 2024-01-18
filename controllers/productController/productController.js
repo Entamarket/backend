@@ -12,9 +12,10 @@ productController.addProduct = ('/add-product', async (req, res)=>{
     const shopID = req.query.shopID
     const newToken =  utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
     try{
+        
         //check if the data is valid
-        if(utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category"]).isValid){
-
+        if(utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]).isValid){
+            req.body.weight = parseFloat(req.body.weight).toFixed(1) + ""
             //add an array of image paths to the body of the product
             const imagePaths = []
             for(let image of req.files){

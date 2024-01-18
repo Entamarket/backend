@@ -2,7 +2,7 @@ const {ObjectId}  = require('mongodb')
 const database = require("../../lib/database")
 
 const utilities = require("../../lib/utilities")
-const {islandPrice, mainLandPrice, paymentGatewayMaxThreshold, paymentGatewayLv1Threshold, maxThresholdFee, lv0ThresholdFee, lv1ThresholdFee} = require("../../lib/variables")
+const {islandPrice, mainLandPrice, paymentGatewayMaxThreshold, paymentGatewayLv1Threshold, maxThresholdFee, lv0ThresholdFee, lv1ThresholdFee, small, medium, large, xlFactor} = require("../../lib/variables")
 
 const purchaseCalculatorController = {}
 
@@ -17,6 +17,7 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
         if(Array.isArray(payload)){
             const purchases = []
             let total = 0
+            let weight = 0
             
             let buyerDetails = payload.pop()
             //loop through the array and validate each product
@@ -44,6 +45,7 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
                             purchase.trader = productObj.owner.primaryID
                             purchase.purchasePrice = parseInt(productObj.price) * product.quantity
                             total += purchase.purchasePrice
+                            weight += parseFloat(productObj.weight) * product.quantity
                             purchases.push(purchase)
 
                         }
@@ -70,16 +72,67 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
             }
 
             let logisticsFee;
-
-            if(buyerDetails.location.toLowerCase() == "island"){
-                logisticsFee = islandPrice;
+            if(weight >= 0 && weight <=2){
+                if(buyerDetails.location.toLowerCase() == "island"){
+                    logisticsFee = islandPrice + small;
+                }
+                else if(buyerDetails.location.toLowerCase() == "mainland"){
+                    logisticsFee = mainLandPrice + small;
+                }
+                else{
+                    //send response   
+                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+                    return
+                }
             }
-            else if(buyerDetails.location.toLowerCase() == "mainland"){
-                logisticsFee = mainLandPrice;
+
+            else if(weight >= 2.1 && weight <=7){
+                if(buyerDetails.location.toLowerCase() == "island"){
+                    logisticsFee = islandPrice + medium;
+                }
+                else if(buyerDetails.location.toLowerCase() == "mainland"){
+                    logisticsFee = mainLandPrice + medium;
+                }
+                else{
+                    //send response   
+                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+                    return
+                }
+            }
+
+            else if(weight >= 7.1 && weight <=10){
+                if(buyerDetails.location.toLowerCase() == "island"){
+                    logisticsFee = islandPrice + large;
+                }
+                else if(buyerDetails.location.toLowerCase() == "mainland"){
+                    logisticsFee = mainLandPrice + large;
+                }
+                else{
+                    //send response   
+                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+                    return
+                }
+            }
+
+            else if(weight > 10){
+                if(buyerDetails.location.toLowerCase() == "island"){
+                    logisticsFee = islandPrice + large + (weight * xlFactor);
+                }
+                else if(buyerDetails.location.toLowerCase() == "mainland"){
+                    logisticsFee = mainLandPrice + large + (weight * xlFactor);
+                }
+                else{
+                    //send response   
+                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+                    return
+                }
             }
             else{
-                logisticsFee = 0;
+                //send response   
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid weight"}, true)
+                return
             }
+            
 
             
             total += logisticsFee
