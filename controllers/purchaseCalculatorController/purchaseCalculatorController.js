@@ -80,9 +80,7 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
                     logisticsFee = mainLandPrice + small;
                 }
                 else{
-                    //send response   
-                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
-                    return
+                    logisticsFee = 0;
                 }
             }
 
@@ -94,9 +92,7 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
                     logisticsFee = mainLandPrice + medium;
                 }
                 else{
-                    //send response   
-                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
-                    return
+                    logisticsFee = 0;
                 }
             }
 
@@ -108,9 +104,7 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
                     logisticsFee = mainLandPrice + large;
                 }
                 else{
-                    //send response   
-                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
-                    return
+                    logisticsFee = 0;
                 }
             }
 
@@ -122,9 +116,7 @@ purchaseCalculatorController.calculatePurchase = ('/calculate-purchase', async (
                     logisticsFee = mainLandPrice + large + (weight * xlFactor);
                 }
                 else{
-                    //send response   
-                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
-                    return
+                    logisticsFee = 0;
                 }
             }
             else{
