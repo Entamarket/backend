@@ -48,7 +48,7 @@ productController.addProduct = ('/add-product', async (req, res)=>{
             }
 
             //send new token
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, errorObj: utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category"]), entamarketToken: newToken}, true)
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, errorObj: utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]), entamarketToken: newToken}, true)
             return
             
         }
