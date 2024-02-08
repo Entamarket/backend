@@ -70,6 +70,7 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
     try{
         //validate payload
         if(utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]).isValid){
+            req.body.weight = parseFloat(req.body.weight).toFixed(1) + ""
             // add the files array in the req if it is not empty
             if(req.files.length > 0){
                 //add an array of image paths to the body of the product
