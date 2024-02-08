@@ -69,7 +69,7 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
     
     try{
         //validate payload
-        if(utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category"]).isValid){
+        if(utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]).isValid){
             // add the files array in the req if it is not empty
             if(req.files.length > 0){
                 //add an array of image paths to the body of the product
@@ -102,7 +102,7 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
             }
 
             //send new token
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category"]).msg, entamarketToken: newToken}, true)
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]).msg, entamarketToken: newToken}, true)
         }
 
     }
