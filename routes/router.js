@@ -149,6 +149,6 @@ router.post("/email-subscription/subscribe", isJwtValidNB, decodeToken, isTokenI
 
 
 //DELETE PAGE
-router.put("/request-account-delete", bodyParser, requestDeleteAccount.deleteAccount)
+router.put("/request-account-delete", bodyParser, isJSON, requestDeleteAccount.deleteAccount)
 
 module.exports = router

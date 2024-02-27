@@ -5,7 +5,7 @@ const requestDeleteAccount = {}
 
 requestDeleteAccount.deleteAccount = ('/request-account-delete', async (req, res)=>{
     //extract payload
-    let payload = req.body;
+    let payload = JSON.parse(req.body)
 
     try{
         //check if user exist
