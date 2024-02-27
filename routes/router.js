@@ -24,6 +24,7 @@ const logisticsAuth = require("../controllers/logisticsController/logisticsAuth"
 const customerSupportController = require("../controllers/customerSuportController/customerSuportController")
 const emailSubscriptionController = require("../controllers/emailSubscriptionController/emailSubscriptionController")
 const soldProductsController = require("../controllers/soldProductsController/soldProductsController")
+const requestDeleteAccount = require("../controllers/requestDeleteController/requestDelete")
 const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader, isAdmin, isLogistics, uploadTraderVerificationDocs, getLogo} = require('../lib/middleware')
 
 
@@ -145,4 +146,9 @@ router.delete('/customer-support/close', isJwtValidNB, decodeToken, isAdmin, cus
 
 router.delete("/email-subscription/unsubscribe", emailSubscriptionController.unsubscribe)
 router.post("/email-subscription/subscribe", isJwtValidNB, decodeToken, isTokenIdValid, emailSubscriptionController.subscribe)
+
+
+//DELETE PAGE
+router.put("/request-account-delete", bodyParser, requestDeleteAccount.deleteAccount)
+
 module.exports = router
