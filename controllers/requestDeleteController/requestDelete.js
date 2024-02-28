@@ -9,7 +9,7 @@ requestDeleteAccount.deleteAccount = ('/request-account-delete', async (req, res
 
     try{
         //check if user exist
-        const user = await database.findOne({email: payload.email}, payload.accountType, ["_id", "password"], 1)
+    const user = await database.findOne({$and:[{email: payload.email}, {deleted : { $exists : false }}]}, payload.accountType, ["_id", "password"], 1)
         if(user){
             // check if password matches
             payload.password = utilities.dataHasher(payload.password)
