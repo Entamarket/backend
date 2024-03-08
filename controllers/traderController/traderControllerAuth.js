@@ -240,7 +240,7 @@ traderControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
       payload.newPassword = utilities.dataHasher(payload.newPassword)
 
       //get trader object with email
-      const traderObj = await database.findOne({email: payload.email}, database.collection.traders, ['_id', 'firstName', 'lastName'], 1)
+      const traderObj = await database.findOne({$and:[{email: payload.email}, {deleted : { $exists : false }}]}, database.collection.traders, ['_id', 'firstName', 'lastName'], 1)
       if(traderObj){
         //create new otp
         const newOtp = utilities.otpMaker()

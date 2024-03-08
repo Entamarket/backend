@@ -242,7 +242,7 @@ buyerControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
       payload.newPassword = utilities.dataHasher(payload.newPassword)
 
       //get buyer object with email
-      const buyerObj = await database.findOne({email: payload.email}, database.collection.buyers, ['_id', 'firstName', 'lastName'], 1)
+      const buyerObj = await database.findOne({$and:[{email: payload.email}, {deleted : { $exists : false }}]}, database.collection.buyers, ['_id', 'firstName', 'lastName'], 1)
       if(buyerObj){
         //create new otp
         const newOtp = utilities.otpMaker()
