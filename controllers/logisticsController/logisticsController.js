@@ -125,22 +125,8 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
             
             const boughtProducts = {checkoutID: checkoutID, products: [], totalProductsPrice: 0}
             let weight = 0
-            //credit every traders account balance
+            
             for(let delivery of pendingDelivery){
-                
-               await database.db.collection(database.collection.traders).updateOne({_id: delivery.purchases.trader}, {$inc: {"accountBalance": parseInt(delivery.purchases.product.price) * delivery.purchases.quantity}})
-
-                //send traders delivery notification
-                const notificationObj = {
-                    checkoutID: delivery._id,
-                    trader: delivery.purchases.trader,
-                    buyer: delivery.buyer,
-                    productID: delivery.purchases.product,
-                    quantity: delivery.purchases.quantity,
-                    moneyCredited: parseInt(delivery.purchases.product.price) * delivery.purchases.quantity 
-                }
-
-                await notificationController.send("delivery", notificationObj, notificationObj.buyer, notificationObj.trader)
 
                 //send products to sold products  collection
                 const shopData = await database.findOne({_id: delivery.purchases.product.shopID}, database.collection.shops, ["name", "shopAddress"], 1)
@@ -266,6 +252,108 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
         return
     }
 })
+
+
+
+logisticsController.confirmProduct = ('/confirm-product', async (req, res)=>{
+   
+    try{
+
+        //extract decoded token
+        const decodedToken = req.decodedToken;
+        //extract checkoutID and the productID
+        const payload = JSON.parse(req.body)
+        const checkoutID = ObjectId(payload.checkoutID)
+        const productID = ObjectId(payload.productID)
+         
+        //Get the pendingDelivery object
+
+        let delivery = await database.db.collection(database.collection.pendingDeliveries).aggregate([
+            {$match: {_id:  checkoutID, purchases: {$elemMatch: {product: productID, trackingStatus: "trader"}} }},
+            {$unwind: "$purchases"},
+            {$lookup: {from: "products", localField: "purchases.product", foreignField: "_id", as: "purchases.product"}},
+            {$unwind: "$purchases.product"},
+            {
+                
+                $group: {
+                    _id: "$_id", buyer: { $first: "$buyer" }, 
+                    purchases:{
+                        $push: {
+                            product: "$purchases.product",
+                            quantity: "$purchases.quantity",
+                            trader: "$purchases.trader",
+                            trackingStatus: "$purchases.trackingStatus"
+                        }
+                    }
+                }
+            }
+        ]).toArray()
+
+        //check if delivery exists
+        if(delivery && delivery.length > 0){
+            delivery = delivery[0]
+            
+            
+            //credit every trader account balance
+            const purchase = delivery.purchases.find(item=> item.product._id.toString() == productID.toString())
+            
+            await database.db.collection(database.collection.traders).updateOne({_id: purchase.product.owner}, {$inc: {"accountBalance": parseInt(purchase.product.price) * purchase.quantity}})
+
+            //update tracker
+            await database.db.collection(database.collection.pendingDeliveries).updateOne({_id: checkoutID, "purchases.product": productID}, {$set: {"purchases.$.trackingStatus": "logistics"}})
+
+            //send traders delivery notification
+            const notificationObj = {
+                checkoutID: delivery._id,
+                trader: purchase.trader,
+                buyer: delivery.buyer,
+                productID: purchase.product._id,
+                quantity: purchase.quantity,
+                moneyCredited: parseInt(purchase.product.price) * purchase.quantity 
+            }
+
+            await notificationController.send("delivery", notificationObj, notificationObj.buyer, notificationObj.trader)
+            //send response
+            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "confirmation sucessful"}, true)
+            return 
+
+        }
+        else{
+            //response   
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this product has already been confirmed"}, true)
+            return
+        }
+
+    }
+    catch(err){
+        console.log(err) 
+        //response   
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+        return
+    }
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 logisticsController.getNotifications = ("/get-notifications", async (req, res)=>{
    

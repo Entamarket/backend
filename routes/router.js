@@ -138,6 +138,7 @@ router.put('/logistics/update-username', bodyParser, isJwtValid, decodeToken, is
 router.get("/logistics/get-notifications", isJwtValidNB, decodeToken, isLogistics, logisticsController.getNotifications)
 router.get("/logistics/view-notification", isJwtValidNB, decodeToken, isLogistics, logisticsController.viewNotification)
 router.delete('/logistics/confirm-delivery', isJwtValidNB, decodeToken, isLogistics, logisticsController.confirmDelivery)
+router.put('/logistics/confirm-product', bodyParser, isJwtValidNB, decodeToken, isLogistics, isJSON, logisticsController.confirmProduct)
 
 router.post('/customer-support/send', bodyParser, isJwtValidNB, decodeToken, isJSON, customerSupportController.send)
 router.get('/customer-support/get-all', isJwtValidNB, decodeToken, isAdmin, customerSupportController.getAll)

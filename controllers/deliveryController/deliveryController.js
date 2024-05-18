@@ -36,19 +36,6 @@ deliveryController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
                 
                 //credit every traders account balance
                 for(let delivery of pendingDelivery){
-                    await database.db.collection(database.collection.traders).updateOne({_id: delivery.purchases.trader}, {$inc: {"accountBalance": parseInt(delivery.purchases.product.price) * delivery.purchases.quantity}})
-
-                    //send traders delivery notification
-                    const notificationObj = {
-                        checkoutID: delivery._id,
-                        trader: delivery.purchases.trader,
-                        buyer: ObjectId(decodedToken.userID),
-                        productID: delivery.purchases.product._id,
-                        quantity: delivery.purchases.quantity,
-                        moneyCredited: parseInt(delivery.purchases.product.price) * delivery.purchases.quantity 
-                    }
-
-                    await notificationController.send("delivery", notificationObj, notificationObj.buyer, notificationObj.trader)
 
                     //send products to sold products  collection
                     const shopData = await database.findOne({_id: delivery.purchases.product.shopID}, database.collection.shops, ["name", "shopAddress"], 1)

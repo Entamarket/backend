@@ -9,7 +9,7 @@ const utilities = require("../../lib/utilities")
 const checkoutController = {}
 
 
-checkoutController.checkout = ('/get-checkout', async (req, res)=>{
+checkoutController.checkout = ('/checkout', async (req, res)=>{
     
     //extract decoded token
     const decodedToken = req.decodedToken;
@@ -50,6 +50,7 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
                             purchase.product = productObj._id
                             purchase.quantity = product.quantity
                             purchase.trader = productObj.owner.primaryID
+                            purchase.trackingStatus = "trader"
                             purchases.push(purchase)
 
                             //make a response purchase copy object and fill it up
@@ -59,6 +60,7 @@ checkoutController.checkout = ('/get-checkout', async (req, res)=>{
                             responsePurchaseCopy.product = responseProduct
                             responsePurchaseCopy.quantity = product.quantity
                             responsePurchaseCopy.trader = productObj.owner
+                            responsePurchaseCopy.trackingStatus = "trader"
                             responsePurchases.push(responsePurchaseCopy)
 
                             //make a logistics purchase copy object and fill it up
