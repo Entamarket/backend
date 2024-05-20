@@ -81,6 +81,7 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
 traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, res)=>{
   // Extract decoded token
   const decodedToken = req.decodedToken
+  console.log(decodedToken)
   
   try{ 
     // extract pendingTrader Object
