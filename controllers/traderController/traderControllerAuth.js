@@ -81,7 +81,6 @@ traderControllerAuth.signup = ('/signup', async (req, res)=>{
 traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, res)=>{
   // Extract decoded token
   const decodedToken = req.decodedToken
-  console.log(decodedToken)
   
   try{ 
     // extract pendingTrader Object
@@ -89,7 +88,6 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
     
     //parse the data
     const payload = JSON.parse(req.body)
-    console.log(payload)
 
     //check if OTP is in valid format
     if(utilities.validator(payload, ["otp"]).isValid){
