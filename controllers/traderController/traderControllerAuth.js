@@ -88,6 +88,7 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
     
     //parse the data
     const payload = JSON.parse(req.body)
+    console.log(payload)
 
     //check if OTP is in valid format
     if(utilities.validator(payload, ["otp"]).isValid){
