@@ -244,16 +244,18 @@ traderControllerDashboard.updateEmail = ('/update-email', async (req, res)=>{
 traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, res)=>{
   //get the decoded token
   const decodedToken = req.decodedToken
+  console.log(decodedToken)
   //create token 
   const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
   let payload = JSON.parse(req.body)
+  console.log(payload)
 
   try{
     //check if payload is valid
     if(utilities.validator(payload, ['otp']).isValid){
       //extrract data from the pendingUsersUpdates collection
       const userObj = await database.findOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates, ['otp', 'dataToUpdate'], 1)
- 
+      console.log(userObj)
       //check if payload otp matches the otp in the userObj collection
       if(payload.otp === userObj.otp){
         //update the data of the trader
