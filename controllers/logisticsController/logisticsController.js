@@ -39,7 +39,7 @@ logisticsController.getPendingDeliveries= ("/get-pending-deliveries", async (req
         const limit = 5
 
         if(typeof set === "number" && set >= 0 && (set * limit < pendingDeliveryCount)){
-            pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).find().skip(set * limit).limit(limit).toArray()
+            pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).find({complete: {$exists: false}}).skip(set * limit).limit(limit).toArray()
 
             if(pendingDelivery.length > 0 ){
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, pendingDeliveries: pendingDelivery}, true)
@@ -299,8 +299,21 @@ logisticsController.confirmProduct = ('/confirm-product', async (req, res)=>{
             
             await database.db.collection(database.collection.traders).updateOne({_id: purchase.product.owner}, {$inc: {"accountBalance": parseInt(purchase.product.price) * purchase.quantity}})
 
-            //update tracker
+            //update trackingStatus both in database and delivery
             await database.db.collection(database.collection.pendingDeliveries).updateOne({_id: checkoutID, "purchases.product": productID}, {$set: {"purchases.$.trackingStatus": "logistics"}})
+            delivery.purchases.forEach((item, index)=>{
+                if(item.product._id.toString() == productID.toString()){
+                    item.trackingStatus = "logistics"
+                }
+            })
+            //check if all the products have been picked by logisticks and set complete to true
+            const notComplete = delivery.purchases.find(item=> item.trackingStatus == "trader")
+
+            if(!notComplete){
+                //update the delevery by setting complete to true
+                await database.updateOne({_id: checkoutID}, database.collection.pendingDeliveries, {complete: true})
+            }
+             
 
             //send traders delivery notification
             const notificationObj = {
