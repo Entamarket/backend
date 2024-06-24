@@ -39,7 +39,7 @@ logisticsController.getPendingDeliveries= ("/get-pending-deliveries", async (req
         const limit = 5
 
         if(typeof set === "number" && set >= 0 && (set * limit < pendingDeliveryCount)){
-            pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).find({complete: {$exists: false}}).skip(set * limit).limit(limit).toArray()
+            pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).find().skip(set * limit).limit(limit).toArray()
 
             if(pendingDelivery.length > 0 ){
                 utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, pendingDeliveries: pendingDelivery}, true)
@@ -103,6 +103,162 @@ logisticsController.getSinglependingDelivery = ('/get-single-pending-delivery', 
 })
 
 
+// logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
+//     //extract decoded token
+//     const decodedToken = req.decodedToken;
+//     //extract checkoutID
+//     const checkoutID = ObjectId(req.query.checkoutID)
+//     try{
+         
+//         //Get the pendingDelivery object
+
+//         let pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).aggregate([
+//             {$match: {_id:  checkoutID}},
+//             {$unwind: "$purchases"},
+//             {$lookup: {from: "products", localField: "purchases.product", foreignField: "_id", as: "purchases.product"}},
+//             {$unwind: "$purchases.product"}
+//         ]).toArray()
+
+
+//         //check if delivery exists
+//         if(pendingDelivery && pendingDelivery.length > 0){
+            
+//             const boughtProducts = {checkoutID: checkoutID, products: [], totalProductsPrice: 0}
+//             let weight = 0
+            
+//             for(let delivery of pendingDelivery){
+
+//                 //send products to sold products  collection
+//                 const shopData = await database.findOne({_id: delivery.purchases.product.shopID}, database.collection.shops, ["name", "shopAddress"], 1)
+//                 const purchase = {checkoutID: checkoutID, product: delivery.purchases.product, shop: shopData, buyer: delivery.buyer, trader: delivery.purchases.trader, price: delivery.purchases.product.price, quantity: delivery.purchases.quantity}
+//                 await new SoldProduct(purchase).save()
+
+//                 //make bought product data
+//                 const traderData = await database.findOne({primaryID: delivery.purchases.trader}, database.collection.users, ["deleted"], 0)
+//                 boughtProducts.products.push({product: delivery.purchases.product,  trader: traderData, shop: shopData, price: delivery.purchases.product.price, quantity: delivery.purchases.quantity, totalProductPrice: delivery.purchases.quantity * parseInt(delivery.purchases.product.price)})
+
+//                 //add weigth
+//                 weight += parseFloat(delivery.purchases.product.weight) * delivery.purchases.quantity
+                
+//             }
+//             boughtProducts.buyer = pendingDelivery[0].buyer
+//             //calculate total products price
+//             for(let price of boughtProducts.products){
+//                 boughtProducts.totalProductsPrice += price.totalProductPrice
+//             }
+            
+//             //Calculate logistics price
+
+//             if(weight >= 0 && weight <=2){
+//                 if(boughtProducts.buyer.location.toLowerCase() == "island"){
+//                     boughtProducts.logisticsFee = islandPrice + small;
+//                 }
+//                 else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
+//                     boughtProducts.logisticsFee = mainLandPrice + small;
+//                 }
+//                 else{
+//                     //send response   
+//                     utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+//                     return
+//                 }
+//             }
+
+//             else if(weight >= 2.1 && weight <=7){
+//                 if(boughtProducts.buyer.location.toLowerCase() == "island"){
+//                     boughtProducts.logisticsFee = islandPrice + medium;
+//                 }
+//                 else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
+//                     boughtProducts.logisticsFee = mainLandPrice + medium;
+//                 }
+//                 else{
+//                     //send response   
+//                     utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+//                     return
+//                 }
+//             }
+
+//             else if(weight >= 7.1 && weight <=10){
+//                 if(boughtProducts.buyer.location.toLowerCase() == "island"){
+//                     boughtProducts.logisticsFee = islandPrice + large;
+//                 }
+//                 else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
+//                     boughtProducts.logisticsFee = mainLandPrice + large;
+//                 }
+//                 else{
+//                     //send response   
+//                     utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+//                     return
+//                 }
+//             }
+
+//             else if(weight > 10){
+//                 if(boughtProducts.buyer.location.toLowerCase() == "island"){
+//                     boughtProducts.logisticsFee = islandPrice + large + (weight * xlFactor);
+//                 }
+//                 else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
+//                     boughtProducts.logisticsFee = mainLandPrice + large + (weight * xlFactor);
+//                 }
+//                 else{
+//                     //send response   
+//                     utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
+//                     return
+//                 }
+//             }
+//             else{
+//                 //send response   
+//                 utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid weight"}, true)
+//                 return
+//             }
+
+//             boughtProducts.total = boughtProducts.totalProductsPrice + boughtProducts.logisticsFee
+
+//             if(boughtProducts.total >= paymentGatewayMaxThreshold){
+//                 boughtProducts.paymentGatewayFee = maxThresholdFee 
+//             }
+//             else{
+//                 if(boughtProducts.total >= paymentGatewayLv1Threshold){
+//                     boughtProducts.paymentGatewayFee = lv1ThresholdFee(boughtProducts.total)
+//                 }
+//                 else{
+//                     boughtProducts.paymentGatewayFee = lv0ThresholdFee(boughtProducts.total)
+//                 }
+//             }
+//             boughtProducts.total += boughtProducts.paymentGatewayFee
+//             await new BoughtProduct(boughtProducts).save()
+            
+            
+//             //delete pending delivery
+//             await database.deleteOne({_id: pendingDelivery[0]._id}, database.collection.pendingDeliveries)
+
+//             //delete trader pending delivery
+//             await database.deleteMany({checkoutID: checkoutID}, database.collection.pendingTradersDeliveries)
+
+//             //send response
+//             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "confirmation sucessful"}, true)
+//             return
+
+//         }
+//         else{
+//             //response   
+//             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this delivery does not exist"}, true)
+//             return
+//         }
+
+//     }
+//     catch(err){
+//         console.log(err) 
+//         //response   
+//         utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+//         return
+//     }
+// })
+
+
+
+
+
+
+
 logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
     //extract decoded token
     const decodedToken = req.decodedToken;
@@ -111,138 +267,10 @@ logisticsController.confirmDelivery = ('/confirm-delivery', async (req, res)=>{
     try{
          
         //Get the pendingDelivery object
+        await database.updateOne({_id: checkoutID}, database.collection.pendingDeliveries, {delivered: true})
 
-        let pendingDelivery = await database.db.collection(database.collection.pendingDeliveries).aggregate([
-            {$match: {_id:  checkoutID}},
-            {$unwind: "$purchases"},
-            {$lookup: {from: "products", localField: "purchases.product", foreignField: "_id", as: "purchases.product"}},
-            {$unwind: "$purchases.product"}
-        ]).toArray()
-
-
-        //check if delivery exists
-        if(pendingDelivery && pendingDelivery.length > 0){
-            
-            const boughtProducts = {checkoutID: checkoutID, products: [], totalProductsPrice: 0}
-            let weight = 0
-            
-            for(let delivery of pendingDelivery){
-
-                //send products to sold products  collection
-                const shopData = await database.findOne({_id: delivery.purchases.product.shopID}, database.collection.shops, ["name", "shopAddress"], 1)
-                const purchase = {checkoutID: checkoutID, product: delivery.purchases.product, shop: shopData, buyer: delivery.buyer, trader: delivery.purchases.trader, price: delivery.purchases.product.price, quantity: delivery.purchases.quantity}
-                await new SoldProduct(purchase).save()
-
-                //make bought product data
-                const traderData = await database.findOne({primaryID: delivery.purchases.trader}, database.collection.users, ["deleted"], 0)
-                boughtProducts.products.push({product: delivery.purchases.product,  trader: traderData, shop: shopData, price: delivery.purchases.product.price, quantity: delivery.purchases.quantity, totalProductPrice: delivery.purchases.quantity * parseInt(delivery.purchases.product.price)})
-
-                //add weigth
-                weight += parseFloat(delivery.purchases.product.weight) * delivery.purchases.quantity
-                
-            }
-            boughtProducts.buyer = pendingDelivery[0].buyer
-            //calculate total products price
-            for(let price of boughtProducts.products){
-                boughtProducts.totalProductsPrice += price.totalProductPrice
-            }
-            
-            //Calculate logistics price
-
-            if(weight >= 0 && weight <=2){
-                if(boughtProducts.buyer.location.toLowerCase() == "island"){
-                    boughtProducts.logisticsFee = islandPrice + small;
-                }
-                else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
-                    boughtProducts.logisticsFee = mainLandPrice + small;
-                }
-                else{
-                    //send response   
-                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
-                    return
-                }
-            }
-
-            else if(weight >= 2.1 && weight <=7){
-                if(boughtProducts.buyer.location.toLowerCase() == "island"){
-                    boughtProducts.logisticsFee = islandPrice + medium;
-                }
-                else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
-                    boughtProducts.logisticsFee = mainLandPrice + medium;
-                }
-                else{
-                    //send response   
-                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
-                    return
-                }
-            }
-
-            else if(weight >= 7.1 && weight <=10){
-                if(boughtProducts.buyer.location.toLowerCase() == "island"){
-                    boughtProducts.logisticsFee = islandPrice + large;
-                }
-                else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
-                    boughtProducts.logisticsFee = mainLandPrice + large;
-                }
-                else{
-                    //send response   
-                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
-                    return
-                }
-            }
-
-            else if(weight > 10){
-                if(boughtProducts.buyer.location.toLowerCase() == "island"){
-                    boughtProducts.logisticsFee = islandPrice + large + (weight * xlFactor);
-                }
-                else if(boughtProducts.buyer.location.toLowerCase() == "mainland"){
-                    boughtProducts.logisticsFee = mainLandPrice + large + (weight * xlFactor);
-                }
-                else{
-                    //send response   
-                    utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid location"}, true)
-                    return
-                }
-            }
-            else{
-                //send response   
-                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "invalid weight"}, true)
-                return
-            }
-
-            boughtProducts.total = boughtProducts.totalProductsPrice + boughtProducts.logisticsFee
-
-            if(boughtProducts.total >= paymentGatewayMaxThreshold){
-                boughtProducts.paymentGatewayFee = maxThresholdFee 
-            }
-            else{
-                if(boughtProducts.total >= paymentGatewayLv1Threshold){
-                    boughtProducts.paymentGatewayFee = lv1ThresholdFee(boughtProducts.total)
-                }
-                else{
-                    boughtProducts.paymentGatewayFee = lv0ThresholdFee(boughtProducts.total)
-                }
-            }
-            boughtProducts.total += boughtProducts.paymentGatewayFee
-            await new BoughtProduct(boughtProducts).save()
-            
-            
-            //delete pending delivery
-            await database.deleteOne({_id: pendingDelivery[0]._id}, database.collection.pendingDeliveries)
-
-            //delete trader pending delivery
-            await database.deleteMany({checkoutID: checkoutID}, database.collection.pendingTradersDeliveries)
-
-            //send response
-            utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "confirmation sucessful"}, true)
-            return
-
-        }
-        else{
-            //response   
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "this delivery does not exist"}, true)
-            return
-        }
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "confirmation sucessful"}, true)
+        return
 
     }
     catch(err){
