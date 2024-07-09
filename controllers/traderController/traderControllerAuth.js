@@ -254,9 +254,9 @@ traderControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
         //send otp to trader email
         await email.sendOtp('entamarketltd@gmail.com', payload.email, "OTP Verification", `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP:`, newOtp)
 
-        //create a token and send
-        const token = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: token}, true )
+        //send user id
+        //const token = utilities.jwt('sign', {userID: traderObj._id, tokenFor: "trader"})
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, id: traderObj._id}, true )
       }
       else{
         utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This email does not exist in database'}, true )

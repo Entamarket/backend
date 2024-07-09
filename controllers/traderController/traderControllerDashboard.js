@@ -244,27 +244,37 @@ traderControllerDashboard.updateEmail = ('/update-email', async (req, res)=>{
 traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, res)=>{
   //get the decoded token
   const decodedToken = req.decodedToken
-  //create token 
-  const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
   let payload = JSON.parse(req.body)
-
+  let userID 
+  if(decodedToken){
+    userID = decodedToken.userID
+  }
+  else{
+    userID = payload.id
+  }
+  let newToken
+  //create token 
+  
+  newToken = utilities.jwt('sign', {userID, tokenFor: "trader"})
   try{
     //check if payload is valid
     if(utilities.validator(payload, ['otp']).isValid){
       //extrract data from the pendingUsersUpdates collection
-      const userObj = await database.findOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates, ['otp', 'dataToUpdate'], 1)
+      const userObj = await database.findOne({userID: ObjectId(userID)}, database.collection.pendingUsersUpdates, ['otp', 'dataToUpdate'], 1)
+      
+      
       if(userObj){
         //check if payload otp matches the otp in the userObj collection
         if(payload.otp === userObj.otp){
           //update the data of the trader
-          await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
+          await database.updateOne({_id: ObjectId(userID)}, database.collection.traders, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
           //update user data
           if(userObj.dataToUpdate.parameter === "phoneNumber" || userObj.dataToUpdate.parameter === "email"){
-            await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value}) 
+            await database.updateOne({primaryID: ObjectId(userID)}, database.collection.users, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value}) 
           }
 
           //delete user from pendingUsersUpdates collection
-          await database.deleteOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates)
+          await database.deleteOne({userID: ObjectId(userID)}, database.collection.pendingUsersUpdates)
 
           //send token
           utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
@@ -296,6 +306,8 @@ traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, re
 
 
 })
+
+
 
 traderControllerDashboard.updatePassword = ('/update-password', async (req, res)=>{
 
