@@ -254,20 +254,28 @@ buyerControllerDashboard.updatePassword = ('/update-password', async (req, res)=
 buyerControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, res)=>{
   //get the decoded token
   const decodedToken = req.decodedToken
-  //create token 
-  const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
   let payload = JSON.parse(req.body)
+  let userID
+  if(decodedToken){
+    userID = decodedToken.userID
+  }
+  else{
+    userID = payload.id 
+  }
+  //create token 
+  const newToken = utilities.jwt('sign', {userID, tokenFor: "buyer"})
+  
 
   try{
     //check if payload is valid
     if(utilities.validator(payload, ['otp']).isValid){
       //extract data from the pendingUsersUpdates collection
-      const userObj = await database.findOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates, ['otp', 'dataToUpdate'], 1)
+      const userObj = await database.findOne({userID: ObjectId(userID)}, database.collection.pendingUsersUpdates, ['otp', 'dataToUpdate'], 1)
  
       //check if payload otp matches the otp in the userObj collection
       if(payload.otp === userObj.otp){
         //update the data of the buyer
-        await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.buyers, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
+        await database.updateOne({_id: ObjectId(userID)}, database.collection.buyers, {[userObj.dataToUpdate.parameter]: userObj.dataToUpdate.value})
 
         //update user data
         if(userObj.dataToUpdate.parameter === "phoneNumber" || userObj.dataToUpdate.parameter === "email"){
@@ -276,26 +284,26 @@ buyerControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, res
         }
 
         //delete user from pendingUsersUpdates collection
-        await database.deleteOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates)
+        await database.deleteOne({userID: ObjectId(userID)}, database.collection.pendingUsersUpdates)
 
         //send token
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
       }
       else{
-        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This otp doesn't match the user`, entamarketToken: newToken}, true )
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This otp doesn't match the user`}, true )
         return
       }
 
     }
     else{
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid data`, entamarketToken: newToken}, true )
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid data`}, true )
       return
     }
    
   }
   catch(err){
     console.log(err)
-    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entamarketToken: newToken}, true )
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
     return
   }
 

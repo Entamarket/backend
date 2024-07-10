@@ -257,8 +257,7 @@ buyerControllerAuth.getNewPassword = ('/get-new-password', async(req, res)=>{
         await email.sendOtp('entamarketltd@gmail.com', payload.email, "OTP Verification", `hello ${buyerObj.firstName} ${buyerObj.lastName}, please verify your email with this OTP:`,  newOtp)
 
         //create a token and send
-        const token = utilities.jwt('sign', {userID: buyerObj._id, tokenFor: "buyer"})
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: token}, true )
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, id: buyerObj._id}, true )
       }
       else{
         utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: 'This email does not exist in database'}, true )

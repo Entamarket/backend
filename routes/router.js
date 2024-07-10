@@ -60,6 +60,7 @@ router.get('/buyer/dashboard', isJwtValidNB, decodeToken, isTokenIdValid, buyerC
 router.put('/buyer/dashboard/update-profile', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.updateProfile)
 router.put('/buyer/dashboard/update-email', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.updateEmail)
 router.put('/buyer/dashboard/update-password', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.updatePassword)
+router.put('/buyer/verify-update-otp', bodyParser, isJSON, buyerControllerDashboard.verifyUpdateOtp)
 router.put('/buyer/dashboard/verify-update-otp', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerDashboard.verifyUpdateOtp)
 router.get('/buyer/get-purchase-history', isJwtValidNB, decodeToken, isTokenIdValid, buyerControllerDashboard.getPurchaseHistory)
 router.delete('/buyer/dashboard/delete-account', isJwtValid, decodeToken, isTokenIdValid, buyerControllerDashboard.deleteAccount)

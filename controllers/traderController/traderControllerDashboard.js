@@ -252,10 +252,9 @@ traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, re
   else{
     userID = payload.id
   }
-  let newToken
-  //create token 
-  
-  newToken = utilities.jwt('sign', {userID, tokenFor: "trader"})
+  l
+  //create token   
+  let newToken = utilities.jwt('sign', {userID, tokenFor: "trader"})
   try{
     //check if payload is valid
     if(utilities.validator(payload, ['otp']).isValid){
@@ -280,20 +279,20 @@ traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, re
           utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
         }
         else{
-          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This otp doesn't match the user`, entamarketToken: newToken}, true )
+          utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This otp doesn't match the user`}, true )
           return
         }
 
       }
       else{
-        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `user update record not available`, entamarketToken: newToken}, true )
+        utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `user update record not available`}, true )
         return
       }
       
 
     }
     else{
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid data`, entamarketToken: newToken}, true )
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid data`}, true )
       return
     }
    
