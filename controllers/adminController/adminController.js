@@ -341,10 +341,6 @@ adminController.TraderVerificationDocsVerdict = ('/trader-verification-docs-verd
             };
             const deleteCommand = new DeleteObjectsCommand(deleteParams);
             const deleteResponse = await s3.send(deleteCommand);
-              
-            console.log('Deleted files:', deleteResponse.Deleted);
-                
-            
 
             //DELETE THE DOCUMENT/RECORD FROM DATABASE
             await database.deleteOne({_id: traderVerificationDocs._id}, database.collection.traderVerificationDocs)
