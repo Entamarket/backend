@@ -5,7 +5,19 @@ const path = require('path')
 const utilities = require("../../lib/utilities")
 const notificationController = require('../notificationController/notificationController')
 const email = require('../../lib/email')
+require('dotenv').config()
+const {S3Client, ListObjectsV2Command, DeleteObjectsCommand} = require('@aws-sdk/client-s3');
 
+
+
+
+const s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
+  });
 
 const adminController = {}
 
@@ -303,8 +315,36 @@ adminController.TraderVerificationDocsVerdict = ('/trader-verification-docs-verd
             Thanks for choosing Entamarket.`
             await email.sendToUsers("entamarketltd@gmail.com", trader.email, "Verification Verdict", msg)
 
-            //delete the idDocs folder
-            await fs.promises.rmdir(path.join(__dirname, '..', '..', 'multimedia', 'traders', traderVerificationDocs.owner.toString(), "idDocs"), {recursive: true})
+            //delete images from s3 bucket
+
+            
+                
+            // List objects with the specified prefix
+            const listParams = {
+                Bucket: process.env.AWS_BUCKET_NAME,
+                Prefix: `verDoc_${traderVerificationDocs.owner.toString()}`,
+            };
+            const listCommand = new ListObjectsV2Command(listParams);
+            const listResponse = await s3.send(listCommand);
+              
+            if (listResponse.Contents.length === 0) {
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "No files documents found"}, true)
+                return;
+            }
+              
+            // Prepare delete parameters
+            const deleteParams = {
+                Bucket: process.env.AWS_BUCKET_NAME,
+                Delete: {
+                    Objects: listResponse.Contents.map((item) => ({ Key: item.Key })),
+                },
+            };
+            const deleteCommand = new DeleteObjectsCommand(deleteParams);
+            const deleteResponse = await s3.send(deleteCommand);
+              
+            console.log('Deleted files:', deleteResponse.Deleted);
+                
+            
 
             //DELETE THE DOCUMENT/RECORD FROM DATABASE
             await database.deleteOne({_id: traderVerificationDocs._id}, database.collection.traderVerificationDocs)

@@ -1,9 +1,19 @@
 const path = require('path')
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const fs = require('fs')
+require('dotenv').config()
 const {ObjectId}  = require('mongodb')
 const Product = require('../../models/product')
 const database = require('../../lib/database')
 const utilities = require('../../lib/utilities')
+
+const s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
+});
 const productController = {}
 
 productController.addProduct = ('/add-product', async (req, res)=>{
@@ -13,16 +23,20 @@ productController.addProduct = ('/add-product', async (req, res)=>{
     const newToken =  utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
     try{
         
+        // check if trader owns shop
+        const shopObj = await database.findOne({_id: ObjectId(shopID)}, database.collection.shops, ['owner'], 1)
+        
+        if(shopObj?.owner.toString() != decodedToken.userID){
+            //send new token
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `This shop doesn't belong to the trader`, entamarketToken: newToken}, true)
+            return
+        }
+
+
         //check if the data is valid
         if(utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]).isValid){
             req.body.weight = parseFloat(req.body.weight).toFixed(1) + ""
-            //add an array of image paths to the body of the product
-            const imagePaths = []
-            for(let image of req.files){
-                imagePaths.push(`https://www.entamarket-api.com/` + image.path)
-            }
-            
-            req.body.images = imagePaths
+            //add other properties
             req.body.owner = ObjectId(decodedToken.userID)
             req.body.shopID = ObjectId(shopID)
             
@@ -30,22 +44,41 @@ productController.addProduct = ('/add-product', async (req, res)=>{
             //store the product
             const savedProduct = await new Product(req.body).save()
 
+            //Upload image to S3 bucket
+            const images = []
+            
+            uploadFile = async(file)=>{
+                const params = {
+                    Bucket: process.env.AWS_BUCKET_NAME,
+                    Key: `product_${decodedToken.userID}-${shopID}-${savedProduct.insertedId}-${Date.now()}_${file.originalname}`,
+                    Body: file.buffer,
+                    ContentType: file.mimetype,
+                };
+                
+                images.push(`${process.env.S3_BUCKET_HOST}/${params.Key}`)
+                const command = new PutObjectCommand(params);
+                
+                return await s3.send(command)
+            }
+            
+            
+            const fileUploadPromises = req.files.map(uploadFile);
+                    
+            await Promise.all(fileUploadPromises)
+
+            //update the product object with images
+            await database.updateOne({_id: savedProduct.insertedId}, database.collection.products, {images})
+
             // update shop products array
             await database.db.collection(database.collection.shops).updateOne({_id: ObjectId(shopID)}, {$addToSet: {products: savedProduct.insertedId}})
 
-            //get product data
+            // get product data
             const productObj = await database.findOne({_id: savedProduct.insertedId}, database.collection.products)
-
-            //send new token
+            // send new token
             utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, productData: productObj, entamarketToken: newToken}, true)
-
-            
-            
+           
+             
         }else{
-            //remove all the images stored
-            for(let image of req.files){
-                await fs.promises.unlink(path.join(__dirname, '..', '..', image.path))
-            }
 
             //send new token
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, errorObj: utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]), entamarketToken: newToken}, true)
@@ -68,25 +101,48 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
     const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: decodedToken.tokenFor})
     
     try{
+
+        //check if product exists
+        const productObj = await database.findOne({$and:[{_id: ObjectId(req.query.productID)}, {deleted : { $exists : false }}]}, database.collection.products, ["shopID"], 1)
+        if(!productObj){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "This product does not exist ", entamarketToken: newToken}, true)
+            return;
+        } 
         //validate payload
         if(utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]).isValid){
             req.body.weight = parseFloat(req.body.weight).toFixed(1) + ""
             // add the files array in the req if it is not empty
             if(req.files.length > 0){
-                //add an array of image paths to the body of the product
-                const imagePaths = []
-                for(let image of req.files){
-                    imagePaths.push(`https://www.entamarket-api.com/` + image.path)
+                //Upload image to S3 bucket
+                const images = []
+                
+                uploadFile = async(file)=>{
+                    const params = {
+                        Bucket: process.env.AWS_BUCKET_NAME,
+                        Key: `product_${decodedToken.userID}-${productObj.shopID.toString()}-${req.query.productID}-${Date.now()}_${file.originalname}`,
+                        Body: file.buffer,
+                        ContentType: file.mimetype,
+                    };
+                    
+                    images.push(`${process.env.S3_BUCKET_HOST}/${params.Key}`)
+                    const command = new PutObjectCommand(params);
+                    
+                    return await s3.send(command)
                 }
+            
+            
+                const fileUploadPromises = req.files.map(uploadFile);
+                    
+                await Promise.all(fileUploadPromises)
 
-                req.body.images = imagePaths
+                req.body.images = images
             }
             else{
                 delete req.body.images
             }
 
             //update product
-            await database.updateOne({$and:[{_id: ObjectId(req.query.productID)}, {deleted : { $exists : false }}]}, database.collection.products, req.body)
+            await database.updateOne({_id: ObjectId(req.query.productID)}, database.collection.products, req.body)
             //get updated product
             const updatedProduct = await database.findOne({_id: ObjectId(req.query.productID)}, database.collection.products)
 

@@ -24,11 +24,14 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
         if(utilities.createShopValidator(payload, ["name", "shopAddress"]).isValid){
 
             //CHECK IF TRADER HAS VERIFIED DOCUMENTS
-            const verifiedDocs = await database.findOne({$and: [{owner: ObjectId(decodedToken.userID)}, {verified: true}]}, database.collection.traderVerificationDocs)
-            
-            
-            if(!verifiedDocs){
+            const verificationDocs = await database.findOne({owner: ObjectId(decodedToken.userID)}, database.collection.traderVerificationDocs)
+            if(!verificationDocs){
                 utilities.setResponseData(res, 401, {'content-type': 'application/json'}, {statusCode: 401, msg: `Please verify your account by uploading a picture of your ID card and utility bill`, entamarketToken: newToken}, true )
+                return
+            }
+
+            if(!verificationDocs.verified){
+                utilities.setResponseData(res, 401, {'content-type': 'application/json'}, {statusCode: 401, msg: `Your verification is pending please be patient`, entamarketToken: newToken}, true )
                 return
             }
 
@@ -49,9 +52,6 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
                 //update owners shopArray
                 await database.db.collection(database.collection.traders).updateOne({_id: payload.owner}, {$addToSet: {shops: savedShop.insertedId}})
                  
-
-                //create shop directory
-                fs.mkdirSync(path.join(__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID, `shop-${newShopID}`))
 
                 //get shop object
                 const shopObj = await database.findOne({_id: savedShop.insertedId}, database.collection.shops)

@@ -1,12 +1,22 @@
-//const fs = require('fs')
-//const path = require('path')
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const {ObjectId}  = require('mongodb')
-
+require('dotenv').config()
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const email = require('../../lib/email')
 const PendingWithdrawal = require("../../models/pendingWithdrawal")
 const notification = require("../notificationController/notificationController")
+
+
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
+});
+
 
 const traderControllerDashboard = {}
 
@@ -404,13 +414,60 @@ traderControllerDashboard.uploadVerificationDocs = ('upload-verification-docs', 
   const decodedToken = req.decodedToken
 
   try{
+
+    //check if trader has uploaded before or not
+    const verificationObj= await database.findOne({owner: ObjectId(decodedToken.userID)}, database.collection.traderVerificationDocs)
+
+    if(verificationObj){
+      if(verificationObj.verified){
+        utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: `You have already been verified`}, true )
+        return
+      }
+      else{
+        utilities.setResponseData(res, 201, {'content-type': 'application/json'}, {statusCode: 201, msg: `Your application is pending`}, true )
+        return
+      }
+    }
+
+
     //Create document for verification data
-    const verificationData ={owner: ObjectId(decodedToken.userID), idCard: `https://www.entamarket-api.com/`+ req.files.idCard[0].path, utilityBill: `https://www.entamarket-api.com/` + req.files.utilityBill[0].path, verified: false}
+    const verificationData ={owner: ObjectId(decodedToken.userID), verified: false}
     const traderData = await database.findOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
     verificationData.traderData = traderData
   
-    await database.insertOne(verificationData, database.collection.traderVerificationDocs)
+   
 
+    
+    //upload Verification document picture to s3 bucket
+            
+    uploadFile = async(file)=>{
+      const params = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: `verDoc_${decodedToken.userID}-${Date.now()}_${file.originalname}`,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      };
+     
+      //const uploadRes = await s3.send(command)
+      if(file.fieldname === "idCard"){
+        verificationData.idCard = `${process.env.S3_BUCKET_HOST}/${params.Key}`
+      }
+      else if(file.fieldname === "utilityBill"){
+        verificationData.utilityBill = `${process.env.S3_BUCKET_HOST}/${params.Key}`
+      }
+
+      const command = new PutObjectCommand(params);
+      return await s3.send(command)
+    }
+     
+     
+    const fileUploadPromises = req.files.map(uploadFile);
+
+    await Promise.all(fileUploadPromises)
+
+
+    await database.insertOne(verificationData, database.collection.traderVerificationDocs)
+    
     //SEND RESPONSE
     utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "success"}, true )
    

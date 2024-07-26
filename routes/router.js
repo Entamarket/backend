@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+require('dotenv').config()
 
 const traderControllerAuth = require('../controllers/traderController/traderControllerAuth')
 const traderControllerDashboard = require('../controllers/traderController/traderControllerDashboard')
@@ -25,7 +26,12 @@ const customerSupportController = require("../controllers/customerSuportControll
 const emailSubscriptionController = require("../controllers/emailSubscriptionController/emailSubscriptionController")
 const soldProductsController = require("../controllers/soldProductsController/soldProductsController")
 const requestDeleteAccount = require("../controllers/requestDeleteController/requestDelete")
-const {bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, uploads, multimedia, updateUploads, isTrader, isAdmin, isLogistics, uploadTraderVerificationDocs, getLogo} = require('../lib/middleware')
+
+const {
+    bodyParser, isJwtValid, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, multimedia,
+    isTrader, isAdmin, isLogistics, 
+    getLogo, multipartFormParser
+} = require('../lib/middleware')
 
 
 router.use('/multimedia/traders', multimedia)
@@ -49,7 +55,7 @@ router.put('/trader/get-new-password', bodyParser, isJSON, traderControllerAuth.
 router.get("/trader/dashboard/request-withdrawal", isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.requestWithdrawal)
 router.put("/trader/dashboard/confirm-bank-details", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, traderControllerDashboard.confirmBankDetails)
 router.get('/trader/get-sales-history', isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.getSalesHistory)
-router.post('/trader/upload-verification-docs', isJwtValidNB, decodeToken, isTokenIdValid, uploadTraderVerificationDocs, traderControllerDashboard.uploadVerificationDocs)
+router.post('/trader/upload-verification-docs', isJwtValidNB, decodeToken, isTokenIdValid, multipartFormParser, traderControllerDashboard.uploadVerificationDocs)
 
 router.post('/buyer/signup', bodyParser, isJSON, buyerControllerAuth.signup)
 router.put('/buyer/signup/account-verification', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerAuth.verifyOtp)
@@ -77,8 +83,8 @@ router.delete('/shop/remove-from-favourite-shops', isJwtValid, decodeToken, isTo
 router.get('/shop/get-shop-unauth', shopController.getShopUnauth)
 router.get("/shop/:id/:id", shopController.getShopProfile)
 
-router.post('/product/add-product', isJwtValid, decodeToken, isTokenIdValid, uploads, productController.addProduct)
-router.put('/product/update-product', isJwtValid, decodeToken, isTokenIdValid, updateUploads, productController.updateProduct)
+router.post('/product/add-product', isJwtValid, decodeToken, isTokenIdValid, multipartFormParser, productController.addProduct)
+router.put('/product/update-product', isJwtValid, decodeToken, isTokenIdValid, multipartFormParser, productController.updateProduct)
 router.delete('/product/delete-product', isJwtValid, decodeToken, isTokenIdValid, productController.deleteProduct)
 router.get('/product/get-product', productController.getProduct)
 router.get('/product/get-all-traders-products', isJwtValidNB, decodeToken, isTokenIdValid, productController.getAllTradersProducts)
@@ -88,7 +94,7 @@ router.get('/comment/get-comments', commentController.getComments)
 router.put('/comment/update-comment', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, commentController.updateComment)
 router.delete('/comment/delete-comment', isJwtValid, decodeToken, isTokenIdValid, commentController.deleteComment)
 
-router.put('/reaction/update-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, uploads, reactionController.updateReaction)
+router.put('/reaction/update-reaction', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, reactionController.updateReaction)
 router.get('/reaction/get-reactions', reactionController.getReactions)
 
 router.get('/home-page', homePageController.home)
@@ -155,5 +161,16 @@ router.post("/email-subscription/subscribe", isJwtValidNB, decodeToken, isTokenI
 
 //DELETE PAGE
 router.put("/request-account-delete", bodyParser, isJSON, requestDeleteAccount.deleteAccount)
+
+
+
+//TEST ROUTE
+router.post("/upload", async (req, res, next) => {
+    res.send("hi");
+})
+
+router.get("/uploads", (req, res, next) => {
+    res.send("successful");
+})
 
 module.exports = router
