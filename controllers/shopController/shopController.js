@@ -1,6 +1,4 @@
 const {ObjectId}  = require('mongodb')
-const fs = require('fs')
-const path = require('path')
 const database = require('../../lib/database')
 const utilities = require('../../lib/utilities')
 const Shop = require('../../models/shop')
@@ -79,8 +77,6 @@ shopController.createShop = ('/create-shop', async (req, res)=>{
         //delete shop from data base
         await database.deleteOne({_id: ObjectId(newShopID)}, database.collection.shops)
 
-        //remove shop directory
-        fs.rmdirSync(path.join(__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID, `shop-${newShopID}`))
         //create newToken
         const newToken = utilities.jwt('sign', {userID: decodedToken.userID, tokenFor: "trader"})   
         utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server", entamarketToken: newToken}, true)
@@ -179,10 +175,6 @@ shopController.deleteShop = ('/delete-shop', async (req, res)=>{
             //delete all products in the shop
 
             await database.updateMany({shopID: ObjectId(shopID)}, database.collection.products, {deleted: true})
-
-            //delete shop directory
-           // await fs.promises.rmdir(path.join(__dirname, '..', '..', 'multimedia', 'traders', decodedToken.userID, `shop-${shopID}`), {recursive: true})
-
             
             //delete the shop
             await database.updateOne({_id: ObjectId(shopID)}, database.collection.shops, {deleted: true})

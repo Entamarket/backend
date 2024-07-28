@@ -1,5 +1,4 @@
-const fs = require('fs')
-const path = require('path')
+
 const {ObjectId}  = require('mongodb')
 const pdfGenerator = require("../../lib/pdf")
 
@@ -400,10 +399,7 @@ buyerControllerDashboard.deleteAccount = ('/delete-account', async (req, res)=>{
   //extract decoded token
   const decodedToken = req.decodedToken
   try{
-    //delete buyer multimedia folder
-    //const dir = [__dirname, '..', '..', 'multimedia', 'buyers', decodedToken.userID.toString()].join(path.sep)
-   // await fs.promises.rmdir(dir, {recursive: true})
-
+    
     //delete all notifications to trader
     await database.deleteMany({$or: [{to: ObjectId(decodedToken.userID)}, {from: ObjectId(decodedToken.userID)}]}, database.collection.notifications)
     //delete buyer cart

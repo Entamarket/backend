@@ -1,4 +1,4 @@
-const fs = require('fs')
+
 const {ObjectId}  = require('mongodb')
 const database = require("../../lib/database")
 const path = require('path')

@@ -1,6 +1,4 @@
-const path = require('path')
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const fs = require('fs')
 require('dotenv').config()
 const {ObjectId}  = require('mongodb')
 const Product = require('../../models/product')
@@ -151,13 +149,7 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
 
         }
         else{
-            if(req.files.length > 0){
-                //remove all the images stored
-                for(let image of req.files){
-                    await fs.promises.unlink(path.join(__dirname, '..', '..', image.path))
-                }
-            }
-
+            
             //send new token
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]).msg, entamarketToken: newToken}, true)
         }
@@ -184,12 +176,6 @@ productController.deleteProduct = ('/delete-product', async (req, res)=>{
         if(productObj?.owner.toString() === decodedToken.userID){
             //remove product from the product array in it's shop
             await database.db.collection(database.collection.shops).updateOne({_id: productObj.shopID}, {$pull:{products: productObj._id}})
-
-            //remove product images from server
-            // for(let image of productObj.images){
-            //     image = image.replace('https://www.entamarket-api.com/', '')
-            //     await fs.promises.unlink(path.join(__dirname, '..', '..', image))
-            // }
 
             //delete product from database
             await database.updateOne({_id: productObj._id}, database.collection.products, {deleted: true})
