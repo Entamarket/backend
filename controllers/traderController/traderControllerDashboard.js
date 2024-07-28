@@ -435,9 +435,6 @@ traderControllerDashboard.uploadVerificationDocs = ('upload-verification-docs', 
     const traderData = await database.findOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
     verificationData.traderData = traderData
   
-   
-
-    
     //upload Verification document picture to s3 bucket
             
     uploadFile = async(file)=>{

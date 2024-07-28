@@ -1,5 +1,4 @@
-const fs = require('fs')
-const path = require('path')
+
 const {ObjectId}  = require('mongodb')
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
@@ -106,10 +105,6 @@ traderControllerAuth.verifyOtp = ('/signup/account-verification', async (req, re
 
         //delete the data in pendingTraders collection
         await database.deleteOne({_id: pendingTraderObj._id}, database.collection.pendingTraders)
-
-        //Create folder in multimedia
-        const dir = [__dirname, '..', '..', 'multimedia', 'traders', savedTrader.insertedId].join(path.sep) 
-        fs.mkdirSync(dir)
 
         //create cart
         //const cart = new Cart({owner: savedTrader.insertedId})

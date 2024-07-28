@@ -1,5 +1,4 @@
-const fs = require('fs')
-const path = require('path')
+
 const {ObjectId}  = require('mongodb')
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
@@ -107,10 +106,6 @@ buyerControllerAuth.verifyOtp = ('/signup/account-verification', async (req, res
 
         //delete the data in pendingBuyers collection
         await database.deleteOne({_id: pendingBuyerObj._id}, database.collection.pendingBuyers)
-
-        //Create folder in multimedia
-        const dir = [__dirname, '..', '..', 'multimedia', 'buyers', savedBuyer.insertedId].join(path.sep)
-        fs.mkdirSync(dir)
 
         //create cart
         //const cart = new Cart({owner: savedBuyer.insertedId})
