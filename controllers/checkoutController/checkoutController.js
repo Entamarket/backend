@@ -21,21 +21,19 @@ checkoutController.checkout = ('/checkout', async (req, res)=>{
             const responsePurchases = []
             const logisticsPurchases = []
             const traderspurchaseCopies = []
-            const buyerDetails = payload.pop()
-            //check if payment is legit
-            const paymentVerification = await utilities.verifyPayment(buyerDetails.ref);
+            const paymentVerification = await utilities.verifyPayment(buyerDetails.ref, payload);
             if(!paymentVerification){
                 utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "Could not verify payment"}, true)
                 return
             }
             delete buyerDetails.ref
+            const buyerDetails = payload.pop()
             buyerDetails.id = ObjectId(decodedToken.userID)
         
             //loop through the array and validate each product
             for(let product of payload){
                 if(utilities.checkoutValidator(product, ["productID", "quantity"]).isValid){
                     //check if the product is real and if it is real, get the product 
-                    //const productObj = await database.findOne({_id: ObjectId(product.productID)})
                     let productObj = await database.db.collection(database.collection.products).aggregate([
                         {$match: {_id: ObjectId(product.productID)}},
                         {$lookup: {from: "users", localField: "owner", foreignField: "primaryID", as: "owner"}},
@@ -48,7 +46,7 @@ checkoutController.checkout = ('/checkout', async (req, res)=>{
                         //check if the stock of this product is greater than or equal to the payload quantity
                         if(product.quantity > 0 && product.quantity <= parseInt(productObj.stock)){
                             //update the stock of product
-                            let updatedProductStock = (parseInt(productObj.stock) - product.quantity) + ""
+                            let updatedProductStock = (productObj.stock - product.quantity)
 
                             await database.updateOne({_id: productObj._id}, database.collection.products, {stock: updatedProductStock})
 
@@ -108,9 +106,9 @@ checkoutController.checkout = ('/checkout', async (req, res)=>{
                 }
 
             }
-        
-        
+
             const purchaseDetails = {buyer: buyerDetails, purchases: purchases}
+
             //store in pending deliveries
             const checkoutObj = await new PendingDelivery(purchaseDetails).save()
 

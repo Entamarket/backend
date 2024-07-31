@@ -33,7 +33,9 @@ productController.addProduct = ('/add-product', async (req, res)=>{
 
         //check if the data is valid
         if(utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]).isValid){
-            req.body.weight = parseFloat(req.body.weight).toFixed(1) + ""
+            req.body.weight = Math.ceil(req.body.weight)
+            req.body.price = Math.ceil(req.body.price)
+            req.body.stock = Math.ceil(req.body.stock)
             //add other properties
             req.body.owner = ObjectId(decodedToken.userID)
             req.body.shopID = ObjectId(shopID)
@@ -108,7 +110,9 @@ productController.updateProduct = ('/update-product', async(req, res)=>{
         } 
         //validate payload
         if(utilities.addProductValidator(req.body, ['name', 'price', 'description', 'stock', "category", "weight"]).isValid){
-            req.body.weight = parseFloat(req.body.weight).toFixed(1) + ""
+            req.body.weight = Math.ceil(req.body.weight)
+            req.body.price = Math.ceil(req.body.price)
+            req.body.stock = Math.ceil(req.body.stock)
             // add the files array in the req if it is not empty
             if(req.files.length > 0){
                 //Upload image to S3 bucket
