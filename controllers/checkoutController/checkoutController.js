@@ -22,6 +22,14 @@ checkoutController.checkout = ('/checkout', async (req, res)=>{
             const logisticsPurchases = []
             const traderspurchaseCopies = []
             const buyerDetails = payload.pop()
+            const ref = buyerDetails.ref
+            //check if payment is legit
+            const paymentVerification = await utilities.verifyPayment(ref);
+            if(!paymentVerification){
+                utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "Could not verify payment"}, true)
+                return
+            }
+            delete buyerDetails.ref
             buyerDetails.id = ObjectId(decodedToken.userID)
         
             //loop through the array and validate each product
