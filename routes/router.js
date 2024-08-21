@@ -45,6 +45,7 @@ router.get('/trader/dashboard', isJwtValidNB, decodeToken, isTokenIdValid, trade
 router.delete('/trader/dashboard/delete-account', isJwtValid, decodeToken, isTokenIdValid, traderControllerDashboard.deleteAccount)
 router.put('/trader/dashboard/update-profile', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, traderControllerDashboard.updateProfile)
 router.put('/trader/dashboard/update-email', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, traderControllerDashboard.updateEmail)
+router.put('/trader/dashboard/update-bank-details', bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.updateBankDetails)
 router.put('/trader/verify-update-otp', bodyParser, isJSON, traderControllerDashboard.verifyUpdateOtp)
 router.put('/trader/dashboard/verify-update-otp', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, traderControllerDashboard.verifyUpdateOtp)
 
@@ -56,6 +57,7 @@ router.get("/trader/dashboard/request-withdrawal", isJwtValidNB, decodeToken, is
 router.put("/trader/dashboard/confirm-bank-details", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, traderControllerDashboard.confirmBankDetails)
 router.get('/trader/get-sales-history', isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.getSalesHistory)
 router.post('/trader/upload-verification-docs', isJwtValidNB, decodeToken, isTokenIdValid, multipartFormParser, traderControllerDashboard.uploadVerificationDocs)
+
 
 router.post('/buyer/signup', bodyParser, isJSON, buyerControllerAuth.signup)
 router.put('/buyer/signup/account-verification', bodyParser, isJwtValid, decodeToken, isTokenIdValid, isJSON, buyerControllerAuth.verifyOtp)
@@ -165,12 +167,7 @@ router.put("/request-account-delete", bodyParser, isJSON, requestDeleteAccount.d
 
 
 //TEST ROUTE
-router.post("/upload", async (req, res, next) => {
-    res.send("hi");
-})
+router.get('/trader/withdraw', isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.withdraw)
 
-router.get("/uploads", (req, res, next) => {
-    res.send("successful");
-})
 
 module.exports = router

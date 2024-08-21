@@ -84,17 +84,10 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
   let payload = JSON.parse(req.body)
   try{
     //Check if the data sent is valid
-    if(utilities.traderProfileUpdateValidator(payload, ['firstName', 'lastName', 'username', 'phoneNumber', "bankDetails"]).isValid){
+    if(utilities.traderProfileUpdateValidator(payload, ['firstName', 'lastName', 'username', 'phoneNumber']).isValid){
 
       //remove all white spaces from user data if any
-      if(payload.bankDetails){
-        let bankDetails = payload.bankDetails
-        delete payload.bankDetails
-        payload = utilities.trimmer(payload)
-        bankDetails = utilities.trimmer(bankDetails)
-        payload.bankDetails = bankDetails
-      }
-      else{payload = utilities.trimmer(payload)}
+      payload = utilities.trimmer(payload)
       
       //get trader object
       const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ['firstName', 'lastName', 'username', 'phoneNumber'], 1)
@@ -138,19 +131,10 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
       if(errorArray.length < 1){
         //update the trader profile
         await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, payload)
+
         //update user profile
-        let userPayload = payload
-        if(userPayload.bankDetails && Object.keys(userPayload).length > 1){
-          delete userPayload.bankDetails
-          await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, userPayload)
-        }
+        await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, payload)
         
-        if(!userPayload.bankDetails && Object.keys(userPayload).length >1){
-          await database.updateOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users, userPayload)
-
-        }
-
-
         //send token
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, entamarketToken: newToken}, true )
 
@@ -161,7 +145,7 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
       }
     }
     else{
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, errorObj: utilities.traderProfileUpdateValidator(payload, ['firstName', 'lastName', 'username', 'phoneNumber', "bankDetails"]), entamarketToken: newToken}, true )
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, errorObj: utilities.traderProfileUpdateValidator(payload, ['firstName', 'lastName', 'username', 'phoneNumber']), entamarketToken: newToken}, true )
       return
     }
 
@@ -169,6 +153,65 @@ traderControllerDashboard.updateProfile = ('/update-profile', async(req, res)=>{
   catch(err){
     console.log(err)
     utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server', entamarketToken: newToken}, true )
+    return
+  }
+})
+
+traderControllerDashboard.updateBankDetails = ('/update-bank-details', async (req, res)=>{
+  //get the decoded token
+  const decodedToken = req.decodedToken
+  let payload = JSON.parse(req.body)
+
+  try{
+  
+    //Check if the data sent is valid
+    if(!utilities.validateBankDetails(payload, ["accountName", "accountNumber", "bankName", "bankCode", "bankType", "password"]).isValid){
+      
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: utilities.validateBankDetails(payload, ["accountName", "accountNumber", "bankName", "bankCode", "bankType", "password"]).msg}, true )
+      return
+      
+    }
+
+    //remove all white spaces from user data if any
+    payload = utilities.trimmer(payload)
+
+    //hash the password
+    payload.password = utilities.dataHasher(payload.password)
+
+    //get trader object
+    const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ['firstName', 'lastName', "email", 'password'], 1)
+
+    //check if the payload password matches the password from the trader object
+    if(payload.password !== traderObj.password){
+        
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `Invalid password`}, true )
+      return
+        
+    }
+
+    //remove password from payload
+    delete payload.password;
+
+    //add create otp
+    const newOtp = utilities.otpMaker()
+
+    //delete a userID if it exist in the pendingUsersUpdates
+    await database.deleteOne({userID: ObjectId(decodedToken.userID)}, database.collection.pendingUsersUpdates)
+
+    //add user to pendingUsersUpdates collection
+    await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'bankDetails', value: payload}}, database.collection.pendingUsersUpdates)
+        
+    //send the new otp to the new email
+    await email.subSend('entamarketltd@gmail.com', traderObj.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, "OTP Verification", decodedToken.userID)
+
+    //send token
+    utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, response: "success"}, true )
+
+
+  }
+  catch(err){
+    console.log(err)
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: 'Something went wrong with server'}, true )
     return
   }
 })
@@ -262,7 +305,7 @@ traderControllerDashboard.verifyUpdateOtp = ('verify-update-otp', async (req, re
   else{
     userID = payload.id
   }
-  l
+  
   //create token   
   let newToken = utilities.jwt('sign', {userID, tokenFor: "trader"})
   try{
@@ -429,7 +472,6 @@ traderControllerDashboard.uploadVerificationDocs = ('upload-verification-docs', 
       }
     }
 
-
     //Create document for verification data
     const verificationData ={owner: ObjectId(decodedToken.userID), verified: false}
     const traderData = await database.findOne({primaryID: ObjectId(decodedToken.userID)}, database.collection.users)
@@ -459,9 +501,9 @@ traderControllerDashboard.uploadVerificationDocs = ('upload-verification-docs', 
      
      
     const fileUploadPromises = req.files.map(uploadFile);
-
+  
     await Promise.all(fileUploadPromises)
-
+    
 
     await database.insertOne(verificationData, database.collection.traderVerificationDocs)
     
@@ -619,6 +661,79 @@ traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (
     utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
     return
   }
+})
+
+
+
+traderControllerDashboard.withdraw = ('/withdraw', async (req, res)=>{
+  const decodedToken = req.decodedToken
+  //const payload = JSON.parse(req.body)
+  try {
+    
+      
+    const transferRecipient = await fetch('https://api.paystack.co/transferrecipient', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        type: 'nuban',
+        name: 'Recipient Name',
+        account_number: '0816416217',
+        bank_code: '044', // Bank code for GTBank
+        currency: 'NGN'
+      })
+    });
+    const transferRecipientResponse = await transferRecipient.json();
+    //console.log(transferRecipientResponse);
+
+    if(!transferRecipientResponse.status){
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: transferRecipientResponse.message}, true)
+      return
+    }
+
+    
+    const initiateTransfer = await fetch('https://api.paystack.co/transfer', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        source: 'balance',
+        amount: 40000, // Amount in kobo (5000 NGN)
+        recipient: transferRecipientResponse.data.recipient_code,
+        reason: 'Payment for services'
+      })
+    });
+    const initiateTransferResponse = await initiateTransfer.json();
+    console.log(initiateTransferResponse);
+
+    const response = await fetch(`https://api.paystack.co/transfer/verify/${initiateTransferResponse.data.reference}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  
+    const data = await response.json();
+    console.log(data);
+
+
+
+    utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "success"}, true)
+    return
+    
+    
+  } 
+  catch (err) {
+    console.log(err)    
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+    return
+  }
+
 })
 
 module.exports = traderControllerDashboard
