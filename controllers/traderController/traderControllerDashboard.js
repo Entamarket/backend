@@ -4,7 +4,6 @@ require('dotenv').config()
 const utilities = require('../../lib/utilities')
 const database = require('../../lib/database')
 const email = require('../../lib/email')
-const PendingWithdrawal = require("../../models/pendingWithdrawal")
 const notification = require("../notificationController/notificationController")
 
 
@@ -593,6 +592,7 @@ traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (
   try{
     //validate payload
     if(utilities.confirmBankDetailsValidator(payload, ["amount"]).isValid){
+      
       //get trader object
       const traderObj = await database.findOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, ["bankDetails", "accountBalance", "firstName", "lastName", "phoneNumber", "email"], 1)
 
@@ -600,42 +600,38 @@ traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (
       if(traderObj.bankDetails){
         //check if account balance is less than or equal to amount to withdraw
         if(traderObj.accountBalance > 0 && traderObj.accountBalance >= payload.amount){
-          //check if the user has a pending withdrawal and if the ammount in the pending withdrawal is more than his account balance
-          const pendingWithdrawals = await database.db.collection(database.collection.pendingWithdrawals).find({"trader._id": ObjectId(decodedToken.userID)}).toArray()
-           
-          if(pendingWithdrawals.length > 0){
-            let totalPendingWithdrawalAmount = 0
-            for(let i of pendingWithdrawals){
-              totalPendingWithdrawalAmount += i.amount
-            }
-            const availableBalance = traderObj.accountBalance - totalPendingWithdrawalAmount
 
-            if(availableBalance < payload.amount){
-              utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: "insufficient available balance"}, true)
-              return
-            }
+          //convert amount to kobo
+          payload.amount *= 100
+
+          const withdrawalResponse = await traderControllerDashboard.withdraw(payload.amount, traderObj.bankDetails)
+
+          if(!withdrawalResponse.success){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: withdrawalResponse.msg}, true)
+            return
           }
 
-          // create admin notification Object
-          const notificationObj ={
-            amount: payload.amount,
-            bankDetails: traderObj.bankDetails
+          //send email to user informing him of the withdrawal
+
+          const msg = `
+            <p>Hello ${traderObj.firstName}, Below is your withrawal summary</p>
+            ${email.withdrawalTemplate(traderObj.bankDetails.accountName, traderObj.bankDetails.bankName, traderObj.bankDetails.accountNumber, payload.amount/100, withdrawalResponse.ref)}
+          `
+
+          await email.sendWithdrawalSummary("entamarketltd@gmail.com", traderObj.email, "Withdrawal Summary", msg)
+
+          //save witdrawal details in withdrawal collection
+          const withdrawalData = {
+            userID: ObjectId(decodedToken.userID),
+            bankDetails: traderObj.bankDetails,
+            amount: payload.amount/100,
+            ref: withdrawalResponse.ref,
+            date: new Date().toLocaleString()
           }
-          //send notification to admin
-          await notification.sendToAdmin("withdrawal", notificationObj, ObjectId(decodedToken.userID), "admin")
 
-          //send data to pending withdrawal collection
-          const trader = {...traderObj}
-          //delete trader.bankDetails
-          delete notificationObj.bankDetails
-          const pendingWithdrawalObj = {...notificationObj, trader: trader}
-          delete pendingWithdrawalObj.from
-          delete pendingWithdrawalObj.to
-          delete pendingWithdrawalObj.read
-          delete pendingWithdrawalObj.type
-          await new PendingWithdrawal(pendingWithdrawalObj).save()
+          await database.insertOne(withdrawalData, database.collection.withdrawals)
 
-          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "withdrawal request sent, you will recieve your money within 12 hours"}, true)
+          utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "Withdrawal successful"}, true)
           return
         }
         else{
@@ -665,75 +661,79 @@ traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (
 
 
 
-traderControllerDashboard.withdraw = ('/withdraw', async (req, res)=>{
-  const decodedToken = req.decodedToken
-  //const payload = JSON.parse(req.body)
-  try {
-    
+traderControllerDashboard.withdraw =  async (amount, bankDetails)=>{
       
-    const transferRecipient = await fetch('https://api.paystack.co/transferrecipient', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        type: 'nuban',
-        name: 'Recipient Name',
-        account_number: '0816416217',
-        bank_code: '044', // Bank code for GTBank
-        currency: 'NGN'
-      })
-    });
-    const transferRecipientResponse = await transferRecipient.json();
-    //console.log(transferRecipientResponse);
+  const transferRecipient = await fetch('https://api.paystack.co/transferrecipient', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      type: bankDetails.bankType,
+      name: bankDetails.accountName,
+      account_number: bankDetails.accountNumber,
+      bank_code: bankDetails.bankCode, 
+      currency: 'NGN'
+    })
+  });
+  const transferRecipientResponse = await transferRecipient.json();
 
-    if(!transferRecipientResponse.status){
-      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: transferRecipientResponse.message}, true)
-      return
+  if(!transferRecipientResponse.status){
+    return {
+      success: false,
+      msg: transferRecipientResponse.message
     }
-
-    
-    const initiateTransfer = await fetch('https://api.paystack.co/transfer', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        source: 'balance',
-        amount: 40000, // Amount in kobo (5000 NGN)
-        recipient: transferRecipientResponse.data.recipient_code,
-        reason: 'Payment for services'
-      })
-    });
-    const initiateTransferResponse = await initiateTransfer.json();
-    console.log(initiateTransferResponse);
-
-    const response = await fetch(`https://api.paystack.co/transfer/verify/${initiateTransferResponse.data.reference}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    });
-  
-    const data = await response.json();
-    console.log(data);
-
-
-
-    utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, msg: "success"}, true)
-    return
-    
-    
-  } 
-  catch (err) {
-    console.log(err)    
-    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
-    return
   }
 
-})
+    
+  const initiateTransfer = await fetch('https://api.paystack.co/transfer', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      source: 'balance',
+      amount: amount, // Amount in kobo 
+      recipient: transferRecipientResponse.data.recipient_code,
+      reason: 'Payment for services'
+    })
+  });
+
+  const initiateTransferResponse = await initiateTransfer.json();
+
+  if(!initiateTransferResponse.status){
+    return {
+      success: false,
+      msg: initiateTransferResponse.message
+    }
+  }
+
+  const verification = await fetch(`https://api.paystack.co/transfer/verify/${initiateTransferResponse.data.reference}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  
+  const verificationResponse = await verification.json();
+
+  if(!verificationResponse.status){
+    return {
+      success: false,
+      msg: verificationResponse.message
+    }
+  }
+
+  return {
+    success: true,
+    msg: "sucess",
+    ref: initiateTransferResponse.data.reference
+  }
+    
+
+}
 
 module.exports = traderControllerDashboard
