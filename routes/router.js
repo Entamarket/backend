@@ -165,9 +165,4 @@ router.post("/email-subscription/subscribe", isJwtValidNB, decodeToken, isTokenI
 router.put("/request-account-delete", bodyParser, isJSON, requestDeleteAccount.deleteAccount)
 
 
-
-//TEST ROUTE
-router.get('/trader/withdraw', isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.withdraw)
-
-
 module.exports = router
