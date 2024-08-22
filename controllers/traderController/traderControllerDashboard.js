@@ -201,7 +201,7 @@ traderControllerDashboard.updateBankDetails = ('/update-bank-details', async (re
     await database.insertOne({userID: ObjectId(decodedToken.userID), createdAt: new Date(), otp: newOtp, dataToUpdate: {parameter: 'bankDetails', value: payload}}, database.collection.pendingUsersUpdates)
         
     //send the new otp to the new email
-    await email.subSend('entamarketltd@gmail.com', traderObj.email, `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your email with this OTP: ${newOtp}`, "OTP Verification", decodedToken.userID)
+    await email.sendOtp('entamarketltd@gmail.com', traderObj.email, "OTP verification", `hello ${traderObj.firstName} ${traderObj.lastName}, please verify your update with this OTP:`, newOtp)
 
     //send token
     utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, response: "success"}, true )
