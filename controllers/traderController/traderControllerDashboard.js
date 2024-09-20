@@ -671,7 +671,7 @@ traderControllerDashboard.withdraw =  async (amount, bankDetails)=>{
     },
     body: JSON.stringify({
       type: bankDetails.bankType,
-      name: bankDetails.accountName,
+      name: bankDetails.bankName,
       account_number: bankDetails.accountNumber,
       bank_code: bankDetails.bankCode, 
       currency: 'NGN'
@@ -735,5 +735,43 @@ traderControllerDashboard.withdraw =  async (amount, bankDetails)=>{
     
 
 }
+
+
+
+traderControllerDashboard.getAccountName = ('/get-account-name', async (req, res)=>{
+  const payload = JSON.parse(req.body)
+  
+  try{
+    const transferRecipient = await fetch('https://api.paystack.co/transferrecipient', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        type: payload.bankType,
+        name: payload.bankName,
+        account_number: payload.accountNumber,
+        bank_code: payload.bankCode, 
+        currency: 'NGN'
+      })
+    });
+    const transferRecipientResponse = await transferRecipient.json();
+  
+    if(!transferRecipientResponse.status){
+      utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: transferRecipientResponse.message}, true )
+      return
+    }
+
+    utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, data: transferRecipientResponse.data.details}, true)
+    return
+    
+  }
+  catch(err){
+    console.log(err)    
+    utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "something went wrong with the server"}, true)
+    return
+  }
+})
 
 module.exports = traderControllerDashboard

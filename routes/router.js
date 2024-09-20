@@ -56,6 +56,7 @@ router.put('/trader/get-new-password', bodyParser, isJSON, traderControllerAuth.
 router.get("/trader/dashboard/request-withdrawal", isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.requestWithdrawal)
 router.put("/trader/dashboard/confirm-bank-details", bodyParser, isJwtValidNB, decodeToken, isTokenIdValid, isJSON, traderControllerDashboard.confirmBankDetails)
 router.get('/trader/get-sales-history', isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.getSalesHistory)
+router.put('/trader/get-account-name', bodyParser, isJSON, isJwtValidNB, decodeToken, isTokenIdValid, traderControllerDashboard.getAccountName)
 router.post('/trader/upload-verification-docs', isJwtValidNB, decodeToken, isTokenIdValid, multipartFormParser, traderControllerDashboard.uploadVerificationDocs)
 
 
