@@ -602,9 +602,9 @@ traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (
         if(traderObj.accountBalance > 0 && traderObj.accountBalance >= payload.amount){
 
           //convert amount to kobo
-          payload.amount *= 100
+          const amount = payload.amount * 100
 
-          const withdrawalResponse = await traderControllerDashboard.withdraw(payload.amount, traderObj.bankDetails)
+          const withdrawalResponse = await traderControllerDashboard.withdraw(amount, traderObj.bankDetails)
 
           if(!withdrawalResponse.success){
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: withdrawalResponse.msg}, true)
@@ -618,7 +618,7 @@ traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (
 
           const msg = `
             <p>Hello ${traderObj.firstName}, Below is your withrawal summary</p>
-            ${email.withdrawalTemplate(traderObj.bankDetails.accountName, traderObj.bankDetails.bankName, traderObj.bankDetails.accountNumber, payload.amount/100, withdrawalResponse.ref)}
+            ${email.withdrawalTemplate(traderObj.bankDetails.accountName, traderObj.bankDetails.bankName, traderObj.bankDetails.accountNumber, payload.amount, withdrawalResponse.ref)}
           `
 
           await email.sendWithdrawalSummary("entamarketltd@gmail.com", traderObj.email, "Withdrawal Summary", msg)
@@ -627,7 +627,7 @@ traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (
           const withdrawalData = {
             userID: ObjectId(decodedToken.userID),
             bankDetails: traderObj.bankDetails,
-            amount: payload.amount/100,
+            amount: payload.amount,
             ref: withdrawalResponse.ref,
             date: new Date().toLocaleString()
           }
