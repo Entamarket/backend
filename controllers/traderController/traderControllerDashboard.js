@@ -611,6 +611,9 @@ traderControllerDashboard.confirmBankDetails = ('/confirm-bank-details', async (
             return
           }
 
+          //decrease amount in account
+          await database.updateOne({_id: ObjectId(decodedToken.userID)}, database.collection.traders, {accountBalance: traderObj.accountBalance - payload.amount})
+
           //send email to user informing him of the withdrawal
 
           const msg = `
